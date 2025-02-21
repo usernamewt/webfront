@@ -1,0 +1,167 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: PingFangSC-Regular, PingFang SC;
+}
+
+
+.drop-dragClass {
+  background: rgba(blue, 0.5) !important;
+}
+.drop-ghostClass {
+    background: rgba(rgb(#6cacf5), 0.5) !important;
+}
+.drop-chosenClass:hover > td {
+  background: rgba(blue, 0.5) !important;
+}
+
+
+::-webkit-scrollbar-thumb {
+    background:rgb(220,223,231);  /* 滑块背景颜色 */
+    border-radius: 5px; /* 滑块圆角 */
+}
+
+/* 237 239 243 */
+
+::-webkit-scrollbar-track {
+    background-color:  rgb(237,239,243);/* 轨道背景颜色 */
+}
+
+::-webkit-scrollbar {
+    width: 5px; /* 横向滚动条宽度 */
+    height: 10px; /* 纵向滚动条高度 */
+}
+
+.box {
+    /* background: #fff; */
+    border-radius: 4px;
+    height: calc(100vh - 120px);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+.ant-tag {
+  margin-right: 0;
+}
+
+.lg-dropdown {
+  .active {
+    color: #1890ff !important;
+  }
+  
+}
+
+.ant-layout-sider-children {
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.ant-menu-item-selected {
+  background-color: #237EFF !important;
+  color: #fff !important;
+}
+
+.ant-menu-item {
+  /* width: calc(100% - 30px) !important; */
+  font-weight: 400 !important;
+color: #7C818D !important; 
+/* padding: 0 !important; */
+}
+.ant-menu-item.ant-menu-item-selected {
+  color: #fff !important;
+}
+
+.ant-menu {
+  /* display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important; */
+  border: none !important;
+}
+
+.ant-form-item {
+  margin-bottom: 16px !important;
+}
+
+.ant-table-cell {
+  padding: 12px 8px !important;
+}
+.ant-table-striped td {
+  border: none !important;
+  color: #1C1E20 !important;
+}
+
+.ant-table-thead th {
+  border: none !important;
+  font-weight: 400 !important;
+font-size: 14px !important;
+color: #6A6F7A !important;
+}
+
+.ant-table-striped .table-striped td {
+  background-color: #F8F9FA !important;
+  border: none !important;
+}
+
+.ant-form-item-label >label {
+  color: #1C1E20;
+}
+
+.ant-modal-body {
+  margin-top: 60px;
+}
+
+.ant-modal-header {
+  border-bottom: 1px solid #E8E9ED;
+    padding-bottom: 10px;
+    position: absolute;
+    width: 100%;
+    left: 0px;
+}
+.ant-modal-title {
+  position: relative;
+  left: 24px;
+  color: #1C1E20;
+}
+
+.ant-modal-title .copy {
+  color: #6A6F7A;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  margin-left: 8px;
+}
+.ant-modal-title .m-title {
+  margin-right: 10px;
+}
+
+.ant-modal-title .copy-icon {
+  cursor: pointer;
+}
+
+
+.ant-modal-body .ant-form-item-label >label {
+  color: #6A6F7A;
+}
+
+.ant-table-wrapper .ant-table-pagination.ant-pagination {
+  margin-bottom: 0;
+}
+
+.ant-transfer-list-header-selected> span:first-child{
+  display: none;
+}
+
+.ant-form-item .ant-form-item-label >label::after{
+  content: '';
+}
+
+.ant-form-item .ant-form-item-label >label {
+  color: #1C1E20;
+}
+/* 
+.ant-menu-title-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+} */
+

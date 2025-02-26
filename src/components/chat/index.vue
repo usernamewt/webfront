@@ -50,6 +50,7 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import io from "socket.io-client";
 import { getToken } from "../../utils/auth";
+import { getUserMenu } from "../../api/user";
 let socket = ref<any>(null);
 const chatList = ref([
   {
@@ -84,7 +85,11 @@ onMounted(() => {
   socket.value.on("disconnect", () => {
     console.log("断开连接");
   });
+
+  initRouter();
 });
+
+const initRouter = async () => {};
 
 const sendMessage = () => {
   if (inputText.value.trim()) {

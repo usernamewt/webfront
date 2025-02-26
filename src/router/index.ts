@@ -1,4 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
+import { getUserMenu } from "../api/user";
+import { getStorage, removeStorage, setStorage } from "../utils/storage";
+import { nextTick } from "vue";
 
 // tenantList  deviceRegist  targetManage  acceryManager
 // 定义静态路由
@@ -7,7 +10,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: "Home",
-    redirect: "/login",
+    redirect: "/chat",
   },
   {
     path: "/Layout",
@@ -15,18 +18,17 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../components/MainContainer.vue"),
     children: [
       {
-        path:'/chat',
-        name:'chat',
+        path: "/chat",
+        name: "chat",
         component: () => import("../components/chat/index.vue"),
-        meta:{
+        meta: {
           title: "聊天室",
           key: "1",
           checkIcon: "icon-device-check",
           ckeckedIcon: "icon-device-checked",
-          hidden:false
-          
-        }
-      }
+          hidden: false,
+        },
+      },
     ],
   },
   // 登陆路由
@@ -59,14 +61,52 @@ const router = createRouter({
 });
 
 // 动态路由添加或删除
-export async function dynamicRouter() {
-}
+export async function dynamicRouter() {}
 
 router.beforeEach((to, from, next) => {
-  next();
+  let routerInfo = getStorage("routerInfo");
+  if (to.path.includes("login")) {
+    return next();
+  }
+  nextTick(async () => {
+    if (routerInfo && routerInfo.user) {
+      console.log("有缓存路由");
+      next();
+    } else {
+      console.log("无缓存路由");
+      let res = await getUserMenu();
+      if (res.code == 0) {
+        let routerInfo = res.data;
+        setStorage("routerInfo", routerInfo);
+        next();
+      } else {
+        removeStorage("routerInfo");
+        next("/login");
+      }
+      // getUserMenu().then((res) => {
+      //   console.log(res);
+      //   let routerInfo = res.data;
+      //   setStorage("routerInfo", routerInfo);
+      //   next();
+      // });
+
+      // 获取路由接口
+      //
+      // console.log(res);
+      // debugger
+      // next()
+      // if (res.code == 0) {
+      //   let routerInfo = res.data
+      //   setStorage("routerInfo", routerInfo);
+      //   next()
+      // } else {
+      //   removeStorage("routerInfo");
+      //   next("/login")
+      // }
+    }
+  });
 });
 
-router.afterEach((to, from) => {
-});
+router.afterEach((to, from) => {});
 
 export default router;

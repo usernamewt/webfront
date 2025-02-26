@@ -143,11 +143,11 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, reactive, ref } from "vue";
+import { nextTick, onMounted, reactive, ref } from "vue";
 import { useLocale } from "../../hooks/languageHook";
 import { setStorage } from "../../utils/storage";
-import { setToken } from "../../utils/auth";
-import { userLogin } from "../../api/user";
+import { getToken, setToken } from "../../utils/auth";
+import { getUserMenu, userLogin } from "../../api/user";
 import verifyCode from "../common/verifyCode.vue";
 import svgIcon from "../layout/svg-icon.vue";
 import { message } from "ant-design-vue";
@@ -175,9 +175,11 @@ interface FormPhone {
   code: string;
 }
 
+onMounted(() => {});
+
 const formPassword = reactive<FormPassword>({
-  username: "",
-  password: "",
+  username: "user",
+  password: "user123",
 });
 const formPhone = reactive<FormPhone>({
   mobile: "",
@@ -196,9 +198,14 @@ const onFinish = () => {
     .then(() => {
       userLogin(formPassword).then((res: any) => {
         if (res.code == 0) {
-          setToken(res.data.token);
-          nextTick(() => {
-            router.push("/chat");
+          setToken(res.data);
+          console.log(getToken());
+
+          getUserMenu().then((res) => {
+            setStorage("routerInfo", res.data);
+            nextTick(() => {
+              router.push("/chat");
+            });
           });
         } else {
           message.error(res.msg);

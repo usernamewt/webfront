@@ -514,12 +514,6 @@ function makeImgWithCanvas() {
 function submit() {
   isSubmting.value = true;
 
-  console.log("pinX.value:", pinX.value);
-  console.log("styleWidth.value:", styleWidth.value);
-  console.log("sliderBaseSize.value:", sliderBaseSize.value);
-  console.log("puzzleBaseSize.value:", puzzleBaseSize.value);
-  console.log("props.canvasWidth:", props.canvasWidth);
-
   const x = Math.abs(
     pinX.value -
       (styleWidth.value - sliderBaseSize.value) +
@@ -528,9 +522,6 @@ function submit() {
           (props.canvasWidth - sliderBaseSize.value)) -
       3
   );
-
-  console.log("x:", x);
-
   if (x < props.range) {
     infoText.value = props.successText;
     infoBoxFail.value = false;

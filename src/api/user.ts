@@ -19,12 +19,16 @@ interface PageI {
 export const userLogin = (data: { username: string; password: string }): Res<ItypeAPI<any>> => {
     return request.post("/user/login", data);
 }
-/**
- * 
- * @param 设备接口
- * @returns 
- */
-// 获取设备列表
-export const getEquipmentList = ():Res<ItypeAPI<any>>=>{
-    return request.get("/device/list")
+
+// 退出登录
+export const userLogout = (): Res<ItypeAPI<any>> => {
+    return request.get("/user/logout");
 }
+
+// 获取用户菜单鉴权
+export const getUserMenu = (): Res<ItypeAPI<any>> => {
+    return request.get("/user/getAuth");
+}
+
+
+

@@ -38,10 +38,12 @@ import {
   MenuFoldOutlined,
   LeftOutlined,
 } from "@ant-design/icons-vue";
-// import { userLogout } from "../../api/user";
+import { userLogout } from "../../api/user";
 import router from "../../router";
 import { useRoute } from "vue-router";
-import { getStorage } from "../../utils/storage";
+import { getStorage, removeStorage, setStorage } from "../../utils/storage";
+import { message } from "ant-design-vue";
+import { removeToken } from "../../utils/auth";
 const { t } = useLocale();
 const route = useRoute();
 const baseStore = useTestStore();
@@ -56,23 +58,23 @@ watch(
 );
 
 const logout = () => {
-  // userLogout().then((res: any) => {
-  //   if (res.code === 0) {
-  //     localStorage.removeItem("userInfo");
-  //     setStorage("userInfo", null);
-  //     setStorage("token", null);
-  //     setStorage("uid", null);
-  //     removeToken();
-  //     nextTick(() => {
-  //       router.push({
-  //         path: "/login",
-  //         query: { redirect: baseStore.currentRouter },
-  //       });
-  //     });
-  //   } else {
-  //     message.error(res.msg);
-  //   }
-  // });
+  userLogout().then((res: any) => {
+    if (res.code === 0) {
+      setStorage("userInfo", null);
+      setStorage("token", null);
+      setStorage("uid", null);
+      removeToken();
+      removeStorage("routerInfo");
+      nextTick(() => {
+        router.push({
+          path: "/login",
+          query: { redirect: baseStore.currentRouter },
+        });
+      });
+    } else {
+      message.error(res.msg);
+    }
+  });
 };
 </script>
 

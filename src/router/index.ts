@@ -83,26 +83,6 @@ router.beforeEach((to, from, next) => {
         removeStorage("routerInfo");
         next("/login");
       }
-      // getUserMenu().then((res) => {
-      //   console.log(res);
-      //   let routerInfo = res.data;
-      //   setStorage("routerInfo", routerInfo);
-      //   next();
-      // });
-
-      // 获取路由接口
-      //
-      // console.log(res);
-      // debugger
-      // next()
-      // if (res.code == 0) {
-      //   let routerInfo = res.data
-      //   setStorage("routerInfo", routerInfo);
-      //   next()
-      // } else {
-      //   removeStorage("routerInfo");
-      //   next("/login")
-      // }
     }
   });
 });

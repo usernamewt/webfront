@@ -20,11 +20,26 @@
       >
     </div>
     <div style="display: flex; align-items: center">
-      <span>欢迎用户：{{ getStorage("userPohone") }}</span
+      <!-- <span>欢迎用户：{{ getStorage("userPohone") }}</span
       ><a-divider type="vertical" />
       <a @click="logout" href="javascript:;" class="menu-i"
         ><span>注销登录</span></a
-      >
+      > -->
+      <a-dropdown>
+        <a-avatar
+          :src="`http://localhost:3000/${getStorage('routerInfo').user.avatar}`"
+        />
+        <template #overlay>
+          <a-menu>
+            <a-menu-item>
+              <a href="javascript:;">个人中心</a>
+            </a-menu-item>
+            <a-menu-item>
+              <a href="javascript:;" @click="logout">注销登录</a>
+            </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
     </div>
   </div>
 </template>

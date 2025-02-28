@@ -1,14 +1,32 @@
 <template>
-  <a-layout style="border-radius: 10px; overflow: hidden">
+  <a-layout style="border-radius: 10px; overflow: hidden; height: 100%">
     <a-layout-sider width="300" style="background: #fff; border-radius: 10px">
-      <a-list :dataSource="chatList">
+      <a-list :dataSource="userList">
         <template #renderItem="{ item }">
-          <a-list-item>
-            <a-list-item-meta
-              :title="item.name"
-              :description="item.lastMessage"
-            />
-            <div>{{ item.time }}</div>
+          <a-list-item
+            @click="handleClick(item)"
+            style="cursor: pointer"
+            class="user-item"
+            :class="{ active: item.active ? 'active' : '' }"
+          >
+            <a-skeleton avatar :title="false" :loading="!!item.loading" active>
+              <a-list-item-meta :description="item.last_message">
+                <template #title>
+                  <span class="message-nickname">{{
+                    item.partner_nickname
+                  }}</span>
+                </template>
+                <template #avatar>
+                  <a-avatar
+                    style="background-color: #fff"
+                    :src="'http://localhost:3000/' + item.partner_avatar"
+                  />
+                </template>
+              </a-list-item-meta>
+              <div style="font-size: 12px" class="message-time">
+                {{ getDays(item.last_message_time) }}
+              </div>
+            </a-skeleton>
           </a-list-item>
         </template>
       </a-list>
@@ -29,15 +47,16 @@
           </div>
 
           <div class="chat-toolbar">
-            <a-button @click="handleEmoji">😀</a-button>
+            <!-- <a-button @click="handleEmoji">😀</a-button>
             <a-button @click="handleImage">图片</a-button>
-            <a-button @click="handleVideo">视频</a-button>
+            <a-button @click="handleVideo">视频</a-button> -->
           </div>
 
           <a-textarea
+            :disabled="diasbledTextArea"
             v-model:value="inputText"
             placeholder="输入消息..."
-            :autoSize="{ minRows: 2, maxRows: 6 }"
+            :autoSize="{ minRows: 8, maxRows: 10 }"
             @pressEnter="sendMessage"
           />
         </div>
@@ -47,36 +66,37 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import io from "socket.io-client";
 import { getToken } from "../../utils/auth";
-import { getUserMenu } from "../../api/user";
+import { getUserChatList, getUserChat } from "../../api/user";
+import { message } from "ant-design-vue";
+import { getStorage } from "../../utils/storage";
 let socket = ref<any>(null);
-const chatList = ref([
-  {
-    id: 1,
-    name: "用户1",
-    avatar: "https://randomuser.me/api/portraits/men/1.jpg",
-    lastMessage: "你好！",
-    time: "2023-10-01",
-  },
-  // ... 更多聊天列表数据
-]);
-
+const userList = ref<any[]>([]);
 const messages = ref<any[]>([]);
 const inputText = ref("");
 const loading = ref(false);
 const noMore = ref(false);
 const messagesRef = ref(null);
+const form_id = ref(1);
+const to_id = ref(-1);
 
 onMounted(() => {
   socket.value = io(`ws://localhost:3000?atoy=${getToken()}`);
   let token = getToken();
   socket.value.emit("authentication", { token });
-  //   messages.value = mockMessages.reverse();
-  socket.value.on("message", (message: string) => {
-    console.log("=============");
-    console.log("收到消息", message);
+  form_id.value = getStorage("routerInfo").user.id;
+  socket.value.on("message", (messages: any) => {
+    if (messages.code === 0) {
+      messages.value.push(message);
+    } else {
+      message.error(messages.msg);
+    }
+  });
+
+  socket.value.on("user_message", (message: any) => {
+    console.log("收到用户消息", message);
     messages.value.push(message);
   });
   socket.value.on("connection", () => {
@@ -86,24 +106,61 @@ onMounted(() => {
     console.log("断开连接");
   });
 
-  initRouter();
+  initUser();
 });
 
-const initRouter = async () => {};
+const initUser = async () => {
+  getUserChatList().then((res) => {
+    if (res.code === 0) {
+      userList.value = res.data.map((el: any) => {
+        return {
+          ...el,
+          active: false,
+        };
+      });
+    }
+  });
+};
+
+const getDays = (date: string) => {
+  return date ? date.split("-")[1] + "-" + date.split("-")[2] : "";
+};
+
+const diasbledTextArea = computed(() => {
+  return to_id.value === -1;
+});
+
+const handleClick = (item: any) => {
+  userList.value.forEach((el: any) => {
+    el.active = false;
+  });
+  item.active = true;
+  to_id.value = item.partner_id;
+  messages.value = [];
+  socket.value.emit("authenticate", {
+    userId: form_id.value,
+  });
+  // TODO: 获取聊天记录
+  getUserChat(item.partner_id).then((res: any) => {
+    console.log(res);
+  });
+};
 
 const sendMessage = () => {
   if (inputText.value.trim()) {
     const message = {
-      id: Date.now(),
-      text: inputText.value,
-      time: new Date().toLocaleTimeString(),
+      from_id: form_id.value,
+      to_id: to_id.value,
+      content: inputText.value,
+      created_time: new Date().toLocaleTimeString(),
+      updated_time: new Date().toLocaleTimeString(),
     };
-    socket.value.emit("message", message);
+    socket.value.emit("user_message", message);
     inputText.value = "";
   }
 };
 
-const handleScroll = (e) => {
+const handleScroll = (e: any) => {
   if (e.target.scrollTop === 0 && !loading.value && !noMore.value) {
     loadMoreMessages();
   }
@@ -112,10 +169,12 @@ const handleScroll = (e) => {
 const loadMoreMessages = () => {
   loading.value = true;
   setTimeout(() => {
-    const newMessages = Array.from({ length: 10 }, (_, i) => ({
-      id: messages.value.length + i + 1,
-      text: `历史消息 ${messages.value.length + i + 1}`,
-      time: new Date().toLocaleTimeString(),
+    const newMessages = Array.from({ length: 10 }, (_) => ({
+      from_id: form_id.value,
+      to_id: to_id.value,
+      content: messages.value,
+      created_time: new Date().toLocaleTimeString(),
+      updated_time: new Date().toLocaleTimeString(),
     }));
     messages.value = [...newMessages, ...messages.value];
     loading.value = false;
@@ -129,7 +188,25 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="less">
+.user-item {
+  &:hover {
+    background-color: #237eff;
+    color: #fff;
+  }
+  .message-time {
+    color: #999;
+  }
+}
+
+.active {
+  background-color: #237eff;
+  color: #fff;
+  .message-time {
+    color: #fff;
+  }
+}
+
 .chat-container {
   display: flex;
   flex-direction: column;

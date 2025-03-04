@@ -48,7 +48,12 @@
   .active {
     color: #1890ff !important;
   }
-  
+}
+
+.ant-card-meta-description {
+  overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
 }
 
 .ant-layout-sider-children {
@@ -160,6 +165,10 @@ color: #6A6F7A !important;
 }
 .ant-list-split .ant-list-item:last-child {
   border-block-end: 1px solid rgba(5, 5, 5, 0.06)
+}
+
+.ant-layout {
+  background-color: #fff !important;
 }
 /* 
 .ant-menu-title-content {

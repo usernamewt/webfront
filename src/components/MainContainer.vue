@@ -79,7 +79,6 @@ watch(
         v-model:selectedKeys="selectedKeys"
         v-model:openKeys="openKeys"
         theme="light"
-        mode="inline"
         @click="handelmenuswitch"
       >
         <a-menu-item
@@ -108,7 +107,9 @@ watch(
           box-sizing: border-box;
           padding: 21px;
           height: calc(100vh - 60px);
-          background: #f3f7fd;
+          border-radius: 10px;
+          background-color: #f2f3f5;
+          overflow-y: scroll;
         "
       >
         <!-- 子路由 -->

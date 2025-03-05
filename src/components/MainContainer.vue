@@ -70,10 +70,16 @@ watch(
       :trigger="null"
       @collapse="onCollapse"
       @breakpoint="onBreakpoint"
-      width="240"
+      width="10vw"
     >
       <div class="logo">
-        <span v-show="!store.menuCollapsed">吃爽了就爽爽吃</span>
+        <span v-show="!store.menuCollapsed">
+          <!-- <img
+            style="width: 10vw; border-radius: 5px"
+            src="../assets/head-day.png"
+            alt=""
+          /> -->
+        </span>
       </div>
       <a-menu
         v-model:selectedKeys="selectedKeys"
@@ -128,7 +134,6 @@ watch(
 <style scoped lang="less">
 .logo {
   height: 60px;
-  padding-left: 28px;
   background: #fff;
   line-height: 60px;
   font-size: 20px;

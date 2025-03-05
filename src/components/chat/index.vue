@@ -1,11 +1,11 @@
 <template>
-  <a-row :gutter="16" v-if="!chatUser">
+  <a-row :gutter="16" v-if="to_id == -1">
     <a-col
       :xs="24"
       :sm="12"
       :md="8"
-      :lg="8"
-      :xl="6"
+      :lg="6"
+      :xl="4"
       v-for="user in userList"
       :key="user.id"
     >
@@ -18,11 +18,13 @@
         <template #cover>
           <img
             alt="example"
-            src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
+            :src="`http://localhost:3000/${user.partner_avatar.split('|')[1]}`"
           />
         </template>
         <template #actions>
-          <MessageOutlined />
+          <a-badge :dot="user.unread_count">
+            <MessageOutlined />
+          </a-badge>
           <HeartOutlined />
           <svgIcon
             style="font-size: 1.3rem"
@@ -37,7 +39,11 @@
           }`"
         >
           <template #avatar>
-            <a-avatar :src="`http://localhost:3000/${user.partner_avatar}`" />
+            <a-avatar
+              :src="`http://localhost:3000/${
+                user.partner_avatar.split('|')[0]
+              }`"
+            />
           </template>
         </a-card-meta>
       </a-card>
@@ -54,7 +60,7 @@
           <div class="participants">
             <svg-icon :name="`bb${(Math.random() * 8 + 1).toFixed(0)}`" />
             <span class="me">{{ "正在和" }}</span>
-            <span class="target">{{ "user" }}</span>
+            <span class="target">{{ chatUser.partner_nickname }}</span>
             <span class="me">{{ "聊天" }}</span>
           </div>
         </div>
@@ -63,11 +69,24 @@
     <!-- 聊天消息区域 -->
     <div class="chat-messages" ref="messagesContainer">
       <div
-        v-for="message in messages"
+        v-for="message in chat_messages"
         :key="message.id"
         class="message-item"
         :class="{ 'user-message': message.isUser }"
       >
+        <div class="avatar-container">
+          <img
+            :src="
+              message.isUser
+                ? `http://localhost:3000/${
+                    getStorage('routerInfo').user.avatar.split('|')[0]
+                  }`
+                : `http://localhost:3000/${
+                    chatUser.partner_avatar.split('|')[0]
+                  }`
+            "
+          />
+        </div>
         <div class="message-bubble">
           <div class="message-content">{{ message.content }}</div>
           <div class="message-time">{{ formatTime(message.timestamp) }}</div>
@@ -92,6 +111,7 @@
     <div class="input-area">
       <a-textarea
         v-model:value="inputText"
+        @keydown.enter="sendMessage"
         placeholder="输入内容"
         :auto-size="{ minRows: 5, maxRows: 8 }"
       />
@@ -103,7 +123,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, onUnmounted, computed, watch } from "vue";
+import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import svgIcon from "../layout/svg-icon.vue";
 
 import {
@@ -115,22 +135,45 @@ import {
 } from "@ant-design/icons-vue";
 import { getUserChatList, getUserChat } from "../../api/user";
 import { message } from "ant-design-vue";
-import { getStorage } from "../../utils/storage";
 import { useTestStore } from "../../store";
+import { getStorage } from "../../utils/storage";
 let socket = useTestStore();
 const userList = ref<any[]>([]);
-const messages = ref<any[]>([]);
+const chat_messages = ref<any[]>([]);
 const inputText = ref("");
 const loading = ref(false);
 const noMore = ref(false);
 const form_id = ref(1);
 const to_id = ref(-1);
-const chatUser = ref(null);
-
+const chatUser = ref<any>(null);
+const messagesContainer = ref<any>(null);
 onMounted(() => {
   socket.initSocket();
   socket.socket.on("new_message", (data: any) => {
-    message.success(data.message);
+    // message.success(data.message);
+    if (to_id.value == -1) {
+      userList.value = userList.value.map((el) => {
+        if (el.partner_id === data.from) {
+          el.last_message = data.message;
+          el.unread_count = el.unread_count + 1;
+        }
+        return el;
+      });
+    } else {
+      if (to_id.value == chatUser.value.partner_id) {
+        chat_messages.value.push({
+          content: data.message,
+          isUser: data.from_id === form_id.value,
+          timestamp: new Date().getTime(),
+        });
+        nextTick(() => {
+          messagesContainer.value.scrollTop =
+            messagesContainer.value.scrollHeight;
+        });
+      } else {
+        message.info("有新消息啦");
+      }
+    }
   });
   initUser();
 });
@@ -142,6 +185,12 @@ onMounted(() => {
 //   },
 //   { deep: true }
 // );
+const formatTime = (timestamp: number) => {
+  const date = new Date(timestamp);
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
+};
 
 const handleKick = (user: any) => {
   user.shake = true;
@@ -150,9 +199,33 @@ const handleKick = (user: any) => {
   }, 500);
 };
 const toChat = (user: any) => {
+  console.log(user);
   user.active = true;
-  to_id.value = user.partner_id;
   chatUser.value = user;
+  nextTick(() => {
+    to_id.value = user.partner_id;
+    chat_messages.value = [];
+    // TODO: 获取聊天记录
+    getUserChat(user.partner_id).then((res: any) => {
+      chat_messages.value = res.data.map((el) => {
+        return {
+          ...el,
+          isUser: el.from_id === form_id.value,
+          timestamp: new Date(el.created_time).getTime(),
+        };
+      });
+      toBottom();
+    });
+  });
+};
+
+const toBottom = () => {
+  nextTick(() => {
+    if (messagesContainer.value) {
+      console.dir(messagesContainer.value);
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    }
+  });
 };
 
 const initUser = async () => {
@@ -163,6 +236,7 @@ const initUser = async () => {
           ...el,
           shake: false,
           active: false,
+          unread_count: 0,
         };
       });
     }
@@ -171,6 +245,7 @@ const initUser = async () => {
 
 const goBack = () => {
   chatUser.value = null;
+  to_id.value = -1;
 };
 
 const getDays = (date: string) => {
@@ -181,23 +256,6 @@ const diasbledTextArea = computed(() => {
   return to_id.value === -1;
 });
 
-const handleClick = (item: any) => {
-  userList.value.forEach((el: any) => {
-    el.active = false;
-  });
-  item.active = true;
-  to_id.value = item.partner_id;
-  messages.value = [];
-  socket.value.emit("authenticate", {
-    userId: form_id.value,
-    nickname: getStorage("routerInfo").user.nickname,
-  });
-  // TODO: 获取聊天记录
-  getUserChat(item.partner_id).then((res: any) => {
-    console.log(res);
-  });
-};
-
 const sendMessage = () => {
   if (inputText.value.trim()) {
     const message_val = {
@@ -205,35 +263,43 @@ const sendMessage = () => {
       message: inputText.value,
     };
     socket.sendSocketMessage({ type: "private_message", val: message_val });
-    inputText.value = "";
+    nextTick(() => {
+      chat_messages.value.push({
+        content: inputText.value,
+        isUser: true,
+        timestamp: new Date().getTime(),
+      });
+      inputText.value = "";
+      toBottom();
+    });
   }
 };
 
-const handleScroll = (e: any) => {
-  if (e.target.scrollTop === 0 && !loading.value && !noMore.value) {
-    loadMoreMessages();
-  }
-};
+// const handleScroll = (e: any) => {
+//   if (e.target.scrollTop === 0 && !loading.value && !noMore.value) {
+//     loadMoreMessages();
+//   }
+// };
 
-const loadMoreMessages = () => {
-  loading.value = true;
-  setTimeout(() => {
-    const newMessages = Array.from({ length: 10 }, (_) => ({
-      from_id: form_id.value,
-      to_id: to_id.value,
-      content: messages.value,
-      created_time: new Date().toLocaleTimeString(),
-      updated_time: new Date().toLocaleTimeString(),
-    }));
-    messages.value = [...newMessages, ...messages.value];
-    loading.value = false;
-    if (messages.value.length >= 30) {
-      noMore.value = true;
-    }
-  }, 1000);
-};
+// const loadMoreMessages = () => {
+//   loading.value = true;
+//   setTimeout(() => {
+//     const newMessages = Array.from({ length: 10 }, (_) => ({
+//       from_id: form_id.value,
+//       to_id: to_id.value,
+//       content: messages.value,
+//       created_time: new Date().toLocaleTimeString(),
+//       updated_time: new Date().toLocaleTimeString(),
+//     }));
+//     messages.value = [...newMessages, ...messages.value];
+//     loading.value = false;
+//     if (messages.value.length >= 30) {
+//       noMore.value = true;
+//     }
+//   }, 1000);
+// };
 onUnmounted(() => {
-  socket.value.disconnect();
+  // socket.value.disconnect();
 });
 </script>
 
@@ -294,7 +360,6 @@ onUnmounted(() => {
 }
 
 .message-content {
-  max-width: 70%;
   padding: 8px 12px;
   border-radius: 8px;
   background-color: #f0f0f0;
@@ -333,11 +398,13 @@ onUnmounted(() => {
 
 .message-item {
   display: flex;
+  gap: 20px;
   margin-bottom: 15px;
 }
 
 .message-item.user-message {
-  justify-content: flex-end;
+  justify-content: flex-start;
+  flex-direction: row-reverse;
 }
 
 .message-bubble {
@@ -351,7 +418,7 @@ onUnmounted(() => {
 
 .user-message .message-bubble {
   background: #409eff;
-  color: white;
+  color: #000;
 }
 
 .message-content {
@@ -582,6 +649,81 @@ onUnmounted(() => {
   to {
     opacity: 0;
     transform: translate(-50%, -50%) scale(2);
+  }
+}
+
+.avatar-container {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1000px; /* 3D 透视效果 */
+}
+
+/* 头像图片样式 */
+.avatar-container img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* 鼠标悬停时触发动画 */
+.avatar-container:hover img {
+  cursor: pointer;
+  transform: scale(1.1) rotateY(180deg); /* 3D 旋转 + 放大 */
+  box-shadow: 0 0 20px rgba(255, 105, 180, 0.8),
+    0 0 40px rgba(255, 105, 180, 0.6), 0 0 60px rgba(255, 105, 180, 0.4);
+}
+
+/* 边框动画 */
+.avatar-container::before {
+  content: "";
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  border-radius: 50%;
+  border: 4px solid transparent;
+  border-top-color: #ff69b4;
+  border-bottom-color: #00ffff;
+  z-index: 1;
+  animation: rotateBorder 3s linear infinite;
+}
+
+/* 粒子特效 */
+.avatar-container::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 105, 180, 0.4),
+    rgba(0, 255, 255, 0.4),
+    transparent 70%
+  );
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.avatar-container:hover::after {
+  opacity: 1;
+}
+
+/* 边框旋转动画 */
+@keyframes rotateBorder {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 </style>

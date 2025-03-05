@@ -4,7 +4,7 @@ import { getToken, removeToken } from "./auth";
 import { message } from "ant-design-vue";
 import { setStorage } from "./storage";
 import { useTestStore } from "../store";
-const whiteList = ["/user/send_sms", "/user/login", "/user/logout"];
+const whiteList = ["/user/send_sms", "/user/login"];
 
 // 创建axios实例
 const request = axios.create({

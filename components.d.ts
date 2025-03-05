@@ -11,6 +11,8 @@ declare module 'vue' {
     500: typeof import('./src/components/500.vue')['default']
     AAvatar: typeof import('ant-design-vue/es')['Avatar']
     ABackTop: typeof import('ant-design-vue/es')['BackTop']
+    ABadge: typeof import('ant-design-vue/es')['Badge']
+    ABadgeRibbon: typeof import('ant-design-vue/es')['BadgeRibbon']
     AButton: typeof import('ant-design-vue/es')['Button']
     ACard: typeof import('ant-design-vue/es')['Card']
     ACardMeta: typeof import('ant-design-vue/es')['CardMeta']

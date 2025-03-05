@@ -45,7 +45,7 @@
               <a-input
                 size="large"
                 v-model:value="formPassword.username"
-                placeholder="请输入用户名"
+                placeholder="默认用户名:user"
               />
             </a-form-item>
             <a-form-item
@@ -57,7 +57,7 @@
                 <a-input
                   size="large"
                   v-model:value="formPassword.password"
-                  placeholder="请输入密码"
+                  placeholder="默认密码:user123"
                   ref="codeRef"
                 />
               </div>
@@ -178,8 +178,8 @@ interface FormPhone {
 onMounted(() => {});
 
 const formPassword = reactive<FormPassword>({
-  username: "user",
-  password: "user123",
+  username: "",
+  password: "",
 });
 const formPhone = reactive<FormPhone>({
   mobile: "",

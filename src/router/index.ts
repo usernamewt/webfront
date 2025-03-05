@@ -22,7 +22,7 @@ const routes: Array<RouteRecordRaw> = [
         name: "chat",
         component: () => import("../components/chat/index.vue"),
         meta: {
-          title: "聊天室",
+          title: "研讨中心",
           key: "1",
           checkIcon: "icon-device-check",
           ckeckedIcon: "icon-device-checked",

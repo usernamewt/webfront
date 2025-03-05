@@ -27,10 +27,17 @@
       > -->
       <a-dropdown>
         <a-avatar
-          :src="`http://localhost:3000/${getStorage('routerInfo').user.avatar}`"
+          :src="`http://localhost:3000/${
+            getStorage('routerInfo').user.avatar.split('|')[0]
+          }`"
         />
         <template #overlay>
           <a-menu>
+            <a-menu-item>
+              <a href="javascript:;"
+                >欢迎：{{ getStorage("routerInfo").user.nickname }}</a
+              >
+            </a-menu-item>
             <a-menu-item>
               <a href="javascript:;">个人中心</a>
             </a-menu-item>

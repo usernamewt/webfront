@@ -27,9 +27,7 @@
       > -->
       <a-dropdown>
         <a-avatar
-          :src="`http://localhost:3000/${
-            getStorage('routerInfo').user.avatar.split('|')[0]
-          }`"
+          :src="`${host}${getStorage('routerInfo').user.avatar.split('|')[0]}`"
         />
         <template #overlay>
           <a-menu>
@@ -70,7 +68,15 @@ const { t } = useLocale();
 const route = useRoute();
 const baseStore = useTestStore();
 const header = ref("设备列表");
-onMounted(() => {});
+const host = ref("");
+onMounted(() => {
+  let basehost = window.location.hostname;
+  host.value = `${window.location.protocol}//${
+    basehost === "localhost" || basehost === "127.0.0.1"
+      ? basehost + ":3000"
+      : basehost
+  }`;
+});
 watch(
   route,
   (nroute: any) => {

@@ -18,7 +18,7 @@
         <template #cover>
           <img
             alt="example"
-            :src="`http://localhost:3000/${user.partner_avatar.split('|')[1]}`"
+            :src="`${host}/${user.partner_avatar.split('|')[1]}`"
           />
         </template>
         <template #actions>
@@ -39,11 +39,7 @@
           }`"
         >
           <template #avatar>
-            <a-avatar
-              :src="`http://localhost:3000/${
-                user.partner_avatar.split('|')[0]
-              }`"
-            />
+            <a-avatar :src="`${host}${user.partner_avatar.split('|')[0]}`" />
           </template>
         </a-card-meta>
       </a-card>
@@ -78,12 +74,8 @@
           <img
             :src="
               message.isUser
-                ? `http://localhost:3000/${
-                    getStorage('routerInfo').user.avatar.split('|')[0]
-                  }`
-                : `http://localhost:3000/${
-                    chatUser.partner_avatar.split('|')[0]
-                  }`
+                ? `${host}${getStorage('routerInfo').user.avatar.split('|')[0]}`
+                : `${host}${chatUser.partner_avatar.split('|')[0]}`
             "
           />
         </div>
@@ -147,7 +139,15 @@ const form_id = ref(1);
 const to_id = ref(-1);
 const chatUser = ref<any>(null);
 const messagesContainer = ref<any>(null);
+const host = ref("");
 onMounted(() => {
+  let basehost = window.location.hostname;
+  host.value = `${window.location.protocol}//${
+    basehost === "localhost" || basehost === "127.0.0.1"
+      ? basehost + ":3000"
+      : basehost
+  }`;
+
   socket.initSocket();
   socket.socket.on("new_message", (data: any) => {
     // message.success(data.message);

@@ -48,7 +48,7 @@ export const useTestStore = defineStore("BaseStore", {
     },
     initSocket() {
       let token = getToken();
-      this.socket = io(`ws://localhost:3000?atoy=${token}`);
+      this.socket = io(`ws://47.120.49.37/:3000?atoy=${token}`);
       this.socket.emit("authenticate", {
         userId: getStorage("routerInfo").user.id,
         nickname: getStorage("routerInfo").user.nickname,

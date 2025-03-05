@@ -8,8 +8,8 @@ const whiteList = ["/user/send_sms", "/user/login"];
 
 // 创建axios实例
 const request = axios.create({
-  // baseURL: '/api',// 所有的请求地址前缀部分
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: "/api", // 所有的请求地址前缀部分
+  // baseURL: import.meta.env.VITE_API_URL,
   timeout: 80000, // 请求超时时间(毫秒)
   withCredentials: true, // 异步请求携带cookie
   // headers: {

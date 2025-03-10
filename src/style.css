@@ -177,3 +177,13 @@ color: #6A6F7A !important;
   align-items: center;
 } */
 
+.container-box {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  box-sizing: border-box;
+  margin-bottom: 16px;
+  min-height: calc(100vh - 128px);
+}
+
+

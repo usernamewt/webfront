@@ -42,3 +42,8 @@ export const getUserChatList = (): Res<ItypeAPI<any[]>> => {
 export const getUserChat = (id: any): Res<ItypeAPI<any[]>> => {
   return request.post("/chat/chatrecord", { id: id });
 };
+
+// 获取所有用户
+export const getAllUser = (data: any): Res<ItypeAPI<any[]>> => {
+  return request.post("/user/getByPage", data);
+};

@@ -29,6 +29,30 @@ const routes: Array<RouteRecordRaw> = [
           hidden: false,
         },
       },
+      {
+        path: "/user",
+        name: "user",
+        component: () => import("../components/user/index.vue"),
+        meta: {
+          title: "用户管理",
+          key: "2",
+          checkIcon: "icon-device-check",
+          ckeckedIcon: "icon-device-checked",
+          hidden: false,
+        },
+      },
+      {
+        path: "/role",
+        name: "role",
+        component: () => import("../components/chat/index.vue"),
+        meta: {
+          title: "角色管理",
+          key: "3",
+          checkIcon: "icon-device-check",
+          ckeckedIcon: "icon-device-checked",
+          hidden: false,
+        },
+      },
     ],
   },
   // 登陆路由

@@ -141,12 +141,7 @@ const chatUser = ref<any>(null);
 const messagesContainer = ref<any>(null);
 const host = ref("");
 onMounted(() => {
-  let basehost = window.location.hostname;
-  host.value = `${window.location.protocol}//${
-    basehost === "localhost" || basehost === "127.0.0.1"
-      ? basehost + ":3000"
-      : basehost
-  }`;
+  host.value = "http://47.120.49.37:8082/";
 
   socket.initSocket();
   socket.socket.on("new_message", (data: any) => {

@@ -14,7 +14,6 @@ const isLoading = ref(false);
 
 onMounted(() => {
   bus.on("isLoading", (val) => {
-    console.log("收到了", val);
     isLoading.value = val as boolean;
   });
 });

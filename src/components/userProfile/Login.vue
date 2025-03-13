@@ -44,6 +44,7 @@
             >
               <a-input
                 size="large"
+                @keypress.enter="onFinish"
                 v-model:value="formPassword.username"
                 placeholder="默认用户名:user"
               />
@@ -54,7 +55,8 @@
               :rules="[{ required: true, message: '请输入密码' }]"
             >
               <div style="display: flex; flex-wrap: nowrap; flex: 4 1">
-                <a-input
+                <a-input-password
+                  @keypress.enter="onFinish"
                   size="large"
                   v-model:value="formPassword.password"
                   placeholder="默认密码:user123"

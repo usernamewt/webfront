@@ -23,6 +23,11 @@ export const userLogin = (data: {
   return request.post("/user/login", data);
 };
 
+// 文件上传统一接口
+export const uploadFile = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/api/upload", data);
+};
+
 // 退出登录
 export const userLogout = (): Res<ItypeAPI<any>> => {
   return request.get("/user/logout");
@@ -46,4 +51,37 @@ export const getUserChat = (id: any): Res<ItypeAPI<any[]>> => {
 // 获取所有用户
 export const getAllUser = (data: any): Res<ItypeAPI<any[]>> => {
   return request.post("/user/getByPage", data);
+};
+
+// 获取所有角色
+export const getAllRole = (): Res<ItypeAPI<any[]>> => {
+  return request.post("/role/getRoleList", {
+    currentPage: 1,
+    pageSize: 999,
+  });
+};
+
+// 分页获取角色
+export const getRoleByPage = (data: any): Res<ItypeAPI<any[]>> => {
+  return request.post("/role/getRoleList", data);
+};
+// 修改用户
+export const updateUser = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/user/update", data);
+};
+// 修改密码
+export const updatePassword = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/user/updatePassword", data);
+};
+// 修改头像
+export const updateAvatar = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/user/updateAvatar", data);
+};
+// 删除用户
+export const deleteUser = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/user/delete", data);
+};
+// 新增用户
+export const addUser = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/user/add", data);
 };

@@ -10,7 +10,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: "Home",
-    redirect: "/chat",
+    redirect: "/user",
   },
   {
     path: "/Layout",
@@ -18,11 +18,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../components/MainContainer.vue"),
     children: [
       {
-        path: "/chat",
-        name: "chat",
-        component: () => import("../components/chat/index.vue"),
+        path: "/user",
+        name: "user",
+        component: () => import("../components/user/index.vue"),
         meta: {
-          title: "研讨中心",
+          title: "用户管理",
           key: "1",
           checkIcon: "icon-device-check",
           ckeckedIcon: "icon-device-checked",
@@ -30,29 +30,29 @@ const routes: Array<RouteRecordRaw> = [
         },
       },
       {
-        path: "/user",
-        name: "user",
-        component: () => import("../components/user/index.vue"),
+        path: "/chat",
+        name: "chat",
+        component: () => import("../components/chat/index.vue"),
         meta: {
-          title: "用户管理",
+          title: "客服中心",
           key: "2",
           checkIcon: "icon-device-check",
           ckeckedIcon: "icon-device-checked",
           hidden: false,
         },
       },
-      {
-        path: "/role",
-        name: "role",
-        component: () => import("../components/chat/index.vue"),
-        meta: {
-          title: "角色管理",
-          key: "3",
-          checkIcon: "icon-device-check",
-          ckeckedIcon: "icon-device-checked",
-          hidden: false,
-        },
-      },
+      // {
+      //   path: "/role",
+      //   name: "role",
+      //   component: () => import("../components/role/index.vue"),
+      //   meta: {
+      //     title: "角色管理",
+      //     key: "3",
+      //     checkIcon: "icon-device-check",
+      //     ckeckedIcon: "icon-device-checked",
+      //     hidden: false,
+      //   },
+      // },
     ],
   },
   // 登陆路由

@@ -21,18 +21,19 @@ request.interceptors.request.use(
   (config) => {
     const baseStore = useTestStore();
     let token = getToken();
-    console.log(token);
-    console.log(router.currentRoute.value);
+
     if (whiteList.includes(config.url!)) {
       console.log("in white list");
       config.headers["Authorization"] = undefined;
       return config;
     }
     if (token) {
-      console.log(token);
       // 添加请求头
       // config.headers["Authorization"]="Bearer "+ token
       config.headers["Authorization"] = token;
+      // if (config.url?.includes("/api/upload")) {
+      //   config.headers["Content-Type"] = "multipart/form-data";
+      // }
     } else {
       config.headers["Authorization"] = "";
       if (

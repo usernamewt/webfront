@@ -23,7 +23,11 @@ onMounted(() => {
   <a-config-provider :locale="zhCN">
     <!-- <language /> -->
     <Loading :isLoading="isLoading"></Loading>
-    <router-view />
+    <router-view v-slot="{ Component }">
+      <transition :name="'fade'" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </router-view>
   </a-config-provider>
 </template>
 
@@ -33,5 +37,21 @@ onMounted(() => {
   top: 1vh;
   right: 4vw;
   z-index: 999;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.4s ease;
+  // transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  // transform: translateX(50%);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  // transform: translateX(-50%);
 }
 </style>

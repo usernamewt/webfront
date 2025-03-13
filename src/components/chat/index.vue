@@ -17,8 +17,10 @@
       >
         <template #cover>
           <img
-            alt="example"
-            :src="`${host}/${user.partner_avatar.split('|')[1]}`"
+            v-lazypng="user.partner_bgavatar"
+            width="300"
+            height="200"
+            style="object-fit: cover"
           />
         </template>
         <template #actions>
@@ -39,7 +41,13 @@
           }`"
         >
           <template #avatar>
-            <a-avatar :src="`${host}${user.partner_avatar.split('|')[0]}`" />
+            <img
+              style="border-radius: 50%"
+              v-lazypng="user.partner_avatar"
+              width="30"
+              height="30"
+            />
+            <!-- <a-avatar :src="" /> -->
           </template>
         </a-card-meta>
       </a-card>
@@ -74,8 +82,8 @@
           <img
             :src="
               message.isUser
-                ? `${host}${getStorage('routerInfo').user.avatar.split('|')[0]}`
-                : `${host}${chatUser.partner_avatar.split('|')[0]}`
+                ? `${host}${getStorage('routerInfo').user.avatar}`
+                : `${host}${chatUser.partner_avatar}`
             "
           />
         </div>
@@ -172,7 +180,6 @@ onMounted(() => {
   });
   initUser();
 });
-
 // watch(
 //   () => socket.socketMsg,
 //   () => {

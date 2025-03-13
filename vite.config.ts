@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
           // target: 'http://192.168.31.98:8000/',
           // target: 'http://192.168.31.59:8000/',
           // target: 'http://222.94.108.86:5173/',
-          target: "http://47.120.49.37:8082",
+          target: env.VITE_BASE,
           // 更改请求的origin为代理服务器的origin，以便与目标服务器交互
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ""),

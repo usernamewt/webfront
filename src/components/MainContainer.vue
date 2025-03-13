@@ -27,7 +27,8 @@ const handelmenuswitch = (item: any) => {
   console.log(item);
   const path =
     baseMenu.value.find((el) => el.meta.key === item.key)?.path || "/404";
-  router.push({ path: "/redirect", query: { path } });
+  // router.push({ path: "/redirect", query: { path } });
+  router.push({ path });
 };
 onMounted(() => {
   const menu = router
@@ -119,7 +120,12 @@ watch(
         "
       >
         <!-- 子路由 -->
-        <router-view></router-view>
+        <router-view v-slot="{ Component }">
+          <transition :name="'slide-fade'" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+        <!-- <router-view></router-view> -->
       </div>
       <div
         class="footer"
@@ -190,5 +196,20 @@ watch(
   height: 100%;
   display: flex;
   align-items: center;
+}
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: opacity 0.4s ease;
+  // transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.slide-fade-enter-from {
+  opacity: 0;
+  // transform: translateX(50%);
+}
+
+.slide-fade-leave-to {
+  opacity: 0;
+  // transform: translateX(-50%);
 }
 </style>

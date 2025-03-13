@@ -12,9 +12,11 @@ import copy from "./directive/copyText.ts";
 app.use(Vant);
 app.use(i18n);
 import router, { dynamicRouter } from "./router/index.ts";
+import lazyLoadPng from "./directive/lazyPng.ts";
 // 解决用户浏览器刷新页面动态路由无法及时加载的问题
 dynamicRouter();
 app.use(router);
 app.directive("userPermession", userPermession);
 app.directive("copy", copy);
+app.directive("lazypng", lazyLoadPng);
 app.mount("#app");

@@ -49,6 +49,7 @@ declare module 'vue' {
     Chat: typeof import('./src/components/chat/index.vue')['default']
     ChatBox: typeof import('./src/components/chat/chatBox.vue')['default']
     Header: typeof import('./src/components/layout/Header.vue')['default']
+    Home: typeof import('./src/components/home/index.vue')['default']
     Language: typeof import('./src/components/layout/language.vue')['default']
     Login: typeof import('./src/components/userProfile/Login.vue')['default']
     MainContainer: typeof import('./src/components/MainContainer.vue')['default']

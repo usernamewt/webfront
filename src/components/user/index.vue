@@ -40,7 +40,12 @@
         >
           新增
         </a-button>
-        <a-button type="primary" html-type="submit" style="margin-right: 20px">
+        <a-button
+          type="primary"
+          html-type="submit"
+          style="margin-right: 20px"
+          @click="search"
+        >
           查询
         </a-button>
         <a-button type="primary" html-type="reset" @click="reset">
@@ -320,6 +325,7 @@ const reset = () => {
   formState.mobile = "";
   formState.created_time = "";
   formState.role = "";
+  search();
 };
 const getRoles = () => {
   getAllRole().then((res: any) => {
@@ -328,12 +334,16 @@ const getRoles = () => {
   });
 };
 const search = async () => {
-  let data = await getAllUser({
+  let params = {
     nickname: formState.nickname,
+    mobile: formState.mobile,
+    state: formState.state,
+    created_time: formState.created_time,
     pageSize: 10,
     currentPage: 1,
-  });
-
+  };
+  let reqParam = filterEmptyValues(params);
+  let data = await getAllUser(reqParam);
   userTable.value = data.data.rows.map((el: any, index: number) => {
     return {
       id: el.id,

@@ -76,10 +76,12 @@ const beforeUpload = (file: any) => {
     file.type === "image/jpg";
   if (!isJpgOrPng) {
     message.error("只能上传jpeg/png/jpg!");
+    return false;
   }
   const isLt2M = file.size / 1024 / 1024 < 2;
   if (!isLt2M) {
     message.error("图片大小必须小于2MB!");
+    return false;
   }
 };
 const handleChange = async (info: UploadChangeParam) => {

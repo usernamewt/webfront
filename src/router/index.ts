@@ -29,30 +29,31 @@ const routes: Array<RouteRecordRaw> = [
           hidden: false,
         },
       },
+
       {
-        path: "/chat",
-        name: "chat",
-        component: () => import("../components/chat/index.vue"),
+        path: "/role",
+        name: "role",
+        component: () => import("../components/role/index.vue"),
         meta: {
-          title: "客服中心",
+          title: "角色管理",
           key: "2",
           checkIcon: "icon-device-check",
           ckeckedIcon: "icon-device-checked",
           hidden: false,
         },
       },
-      // {
-      //   path: "/role",
-      //   name: "role",
-      //   component: () => import("../components/role/index.vue"),
-      //   meta: {
-      //     title: "角色管理",
-      //     key: "3",
-      //     checkIcon: "icon-device-check",
-      //     ckeckedIcon: "icon-device-checked",
-      //     hidden: false,
-      //   },
-      // },
+      {
+        path: "/chat",
+        name: "chat",
+        component: () => import("../components/chat/index.vue"),
+        meta: {
+          title: "客服中心",
+          key: "3",
+          checkIcon: "icon-device-check",
+          ckeckedIcon: "icon-device-checked",
+          hidden: false,
+        },
+      },
     ],
   },
   // 登陆路由

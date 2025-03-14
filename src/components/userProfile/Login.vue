@@ -201,12 +201,10 @@ const onFinish = () => {
       userLogin(formPassword).then((res: any) => {
         if (res.code == 0) {
           setToken(res.data);
-          console.log(getToken());
-
           getUserMenu().then((res) => {
             setStorage("routerInfo", res.data);
             nextTick(() => {
-              router.push("/chat");
+              router.push("/user");
             });
           });
         } else {

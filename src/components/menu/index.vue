@@ -30,8 +30,6 @@
 <script lang="ts" setup>
 import { onMounted, ref, h, nextTick } from "vue";
 import api from "../../api/index";
-import { filterEmptyValues } from "../../utils/tools";
-import { stat } from "fs";
 
 const menuData = ref<any[]>([]);
 const formState = ref({

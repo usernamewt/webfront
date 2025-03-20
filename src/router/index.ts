@@ -24,8 +24,8 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
           title: "用户管理",
           key: "1",
-          checkIcon: "icon-device-check",
-          ckeckedIcon: "icon-device-checked",
+          checkIcon: "icon-user-check",
+          ckeckedIcon: "icon-user-checked",
           hidden: false,
         },
       },
@@ -36,8 +36,8 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
           title: "角色管理",
           key: "2",
-          checkIcon: "icon-device-check",
-          ckeckedIcon: "icon-device-checked",
+          checkIcon: "icon-role-check",
+          ckeckedIcon: "icon-role-checked",
           hidden: false,
         },
       },
@@ -48,8 +48,8 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
           title: "菜单管理",
           key: "3",
-          checkIcon: "icon-device-check",
-          ckeckedIcon: "icon-device-checked",
+          checkIcon: "icon-menu-check",
+          ckeckedIcon: "icon-menu-checked",
           hidden: false,
         },
       },
@@ -60,8 +60,8 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
           title: "客服中心",
           key: "4",
-          checkIcon: "icon-device-check",
-          ckeckedIcon: "icon-device-checked",
+          checkIcon: "icon-chat-check",
+          ckeckedIcon: "icon-chat-checked",
           hidden: false,
         },
       },

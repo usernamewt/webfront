@@ -390,7 +390,7 @@ const roleColumns = ref([
     key: "operation",
     ellipsis: true,
     align: "center",
-    width: 140,
+    width: 90,
   },
 ]);
 </script>

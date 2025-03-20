@@ -53,18 +53,6 @@ export const getAllUser = (data: any): Res<ItypeAPI<any[]>> => {
   return request.post("/user/getByPage", data);
 };
 
-// 获取所有角色
-export const getAllRole = (): Res<ItypeAPI<any[]>> => {
-  return request.post("/role/getRoleList", {
-    currentPage: 1,
-    pageSize: 999,
-  });
-};
-
-// 分页获取角色
-export const getRoleByPage = (data: any): Res<ItypeAPI<any[]>> => {
-  return request.post("/role/getRoleList", data);
-};
 // 修改用户
 export const updateUser = (data: any): Res<ItypeAPI<any>> => {
   return request.post("/user/update", data);
@@ -77,6 +65,10 @@ export const updatePassword = (data: any): Res<ItypeAPI<any>> => {
 export const updateAvatar = (data: any): Res<ItypeAPI<any>> => {
   return request.post("/user/updateAvatar", data);
 };
+// 修改用户状态
+export const updateUserStatus = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/user/updateState", data);
+};
 // 删除用户
 export const deleteUser = (data: any): Res<ItypeAPI<any>> => {
   return request.post("/user/delete", data);
@@ -85,3 +77,28 @@ export const deleteUser = (data: any): Res<ItypeAPI<any>> => {
 export const addUser = (data: any): Res<ItypeAPI<any>> => {
   return request.post("/user/add", data);
 };
+
+// 获取所有权限列表
+export const getAllPermission = (): Res<ItypeAPI<any>> => {
+  return request.get("/permission/all");
+};
+
+// 查询角色权限
+export const getRolePermission = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/permission/queryByRole", data);
+};
+
+// 新增权限
+export const addPermission = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/permission/add", data);
+};
+
+// 删除权限
+export const deletePermission = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/permission/delete", data);
+};
+
+// // 查询用户权限
+// export const getUserPermission = (data: any): Res<ItypeAPI<any>> => {
+//   return request.post("/permission/getUserPermission", data);
+// }

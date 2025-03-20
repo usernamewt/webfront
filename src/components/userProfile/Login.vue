@@ -148,22 +148,18 @@
 import { nextTick, onMounted, reactive, ref } from "vue";
 import { useLocale } from "../../hooks/languageHook";
 import { setStorage } from "../../utils/storage";
-import { getToken, setToken } from "../../utils/auth";
+import { setToken } from "../../utils/auth";
 import { getUserMenu, userLogin } from "../../api/user";
 import verifyCode from "../common/verifyCode.vue";
 import svgIcon from "../layout/svg-icon.vue";
 import { message } from "ant-design-vue";
-import { useTestStore } from "../../store";
 import { useRouter } from "vue-router";
 const router = useRouter();
-// import { setupRoutes } from "../../router/dynamic";
 const isVerificationVisible = ref(false);
 const { t } = useLocale();
 const loginFormRef = ref();
-// const timer = ref();
 const getCodeLoading = ref(false);
 const time = ref(0);
-const baseStore = useTestStore();
 const codeRef = ref();
 const handleVerificationSubmit = () => {
   isVerificationVisible.value = false;
@@ -176,9 +172,7 @@ interface FormPhone {
   mobile: string;
   code: string;
 }
-
 onMounted(() => {});
-
 const formPassword = reactive<FormPassword>({
   username: "",
   password: "",

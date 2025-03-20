@@ -68,8 +68,6 @@
           <a>{{ text }}</a>
         </template>
         <template v-if="column.dataIndex === 'state'">
-          <!-- {{ record }} -->
-
           <a-switch
             v-model:checked="record.state"
             size="small"
@@ -181,6 +179,7 @@
             v-model:value="userForm.role"
             @change="onChange"
             style="width: 200px"
+            mode="multiple"
           >
             <a-select-option
               v-for="item in roleList"
@@ -220,17 +219,9 @@
         size="small"
       >
         <a-form-item label="请输入密码" name="password">
-          <a-input
+          <a-input-password
             v-model:value="currentpwd"
             :rules="[{ required: true, message: '请输入密码' }]"
-            @keypress.enter="handelResetPwd"
-          />
-        </a-form-item>
-        <a-form-item label="请输入密码" name="cpassword">
-          <a-input
-            v-model:value="currentpwd"
-            name="cpassword"
-            :rules="[{ validator: validatePass }, { required: true }]"
             @keypress.enter="handelResetPwd"
           />
         </a-form-item>
@@ -244,12 +235,13 @@ import type { UnwrapRef } from "vue";
 import { FormProps, Button, notification, message } from "ant-design-vue";
 import {
   getAllUser,
-  getAllRole,
   updatePassword,
   updateUser,
   deleteUser,
   addUser,
+  updateUserStatus,
 } from "../../api/user";
+import api from "../../api/index";
 import uploadSingle from "../common/uploadSingle.vue";
 import { filterEmptyValues } from "../../utils/tools";
 import { getStorage } from "../../utils/storage";
@@ -328,7 +320,7 @@ const reset = () => {
   search();
 };
 const getRoles = () => {
-  getAllRole().then((res: any) => {
+  api.role.getAllRole().then((res: any) => {
     roleList.value = res.data.rows;
     console.log(res.data);
   });
@@ -352,7 +344,7 @@ const search = async () => {
       nickname: el.nickname,
       mobile: el.mobile,
       state: el.state === 1 ? true : false,
-      role: el.role_id,
+      role: el.role_id.map((el) => Number(el)),
       index: index + 1,
       bgavatar: el.bgavatar,
     };
@@ -360,7 +352,7 @@ const search = async () => {
 };
 const handleCancel = () => {
   bUpload.value.reset();
-  aUpload.value.reset();
+  aUpload.value?.reset();
   userForm.value = {
     nickname: "",
     password: "",
@@ -372,7 +364,7 @@ const handleCancel = () => {
   };
   openModal.value = false;
 };
-const handleOk = () => {
+const handleOk = async () => {
   userFormRef.value.validate().then(() => {
     let params: any = {
       bgavatar: bgImg.value,
@@ -386,15 +378,13 @@ const handleOk = () => {
       params["password"] = userForm.value.password;
       params["username"] = userForm.value.username;
       params["avatar"] = aImg.value;
-      console.log(params);
-
       const reqparam = filterEmptyValues(params);
       addUser(reqparam).then((res) => {
         if (res.code === 0) {
+          search();
           message.success(res.msg);
           openModal.value = false;
           handleCancel();
-          search();
         } else {
           message.error(res.msg);
         }
@@ -455,7 +445,6 @@ const cancelResetPwd = () => {
 };
 
 const showEditModal = (record: any) => {
-  console.log(record);
   if (record) {
     console.log("ddddd");
 
@@ -473,7 +462,6 @@ const showEditModal = (record: any) => {
       password: "",
       cpassword: "",
     };
-    console.log(userForm.value);
   }
 
   nextTick(() => {
@@ -493,6 +481,15 @@ const onChange = (value: string) => {
 
 const onChangeVal = (record: any) => {
   if (record.state) {
+    updateUserStatus({ id: record.id, state: 1 }).then((res) => {
+      if (res.code === 0) {
+        message.success(res.msg);
+        record.state = true;
+        notification.close(key);
+      } else {
+        message.error(res.msg);
+      }
+    });
     return;
   }
   record.state = true;
@@ -508,7 +505,15 @@ const onChangeVal = (record: any) => {
           type: "primary",
           size: "small",
           onClick: () => {
-            record.state = false;
+            updateUserStatus({ id: record.id, state: 0 }).then((res) => {
+              if (res.code === 0) {
+                message.success(res.msg);
+                record.state = false;
+                notification.close(key);
+              } else {
+                message.error(res.msg);
+              }
+            });
             notification.close(key);
           },
         },

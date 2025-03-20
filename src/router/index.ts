@@ -29,7 +29,6 @@ const routes: Array<RouteRecordRaw> = [
           hidden: false,
         },
       },
-
       {
         path: "/role",
         name: "role",
@@ -43,12 +42,24 @@ const routes: Array<RouteRecordRaw> = [
         },
       },
       {
+        path: "/menu",
+        name: "menu",
+        component: () => import("../components/menu/index.vue"),
+        meta: {
+          title: "菜单管理",
+          key: "3",
+          checkIcon: "icon-device-check",
+          ckeckedIcon: "icon-device-checked",
+          hidden: false,
+        },
+      },
+      {
         path: "/chat",
         name: "chat",
         component: () => import("../components/chat/index.vue"),
         meta: {
           title: "客服中心",
-          key: "3",
+          key: "4",
           checkIcon: "icon-device-check",
           ckeckedIcon: "icon-device-checked",
           hidden: false,

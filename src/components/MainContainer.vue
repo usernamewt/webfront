@@ -43,22 +43,9 @@ onMounted(() => {
 watch(
   () => route.fullPath,
   (newval) => {
-    if (newval.includes("/client")) {
-      selectedKeys.value = ["1"];
-    } else if (newval.includes("/device")) {
-      selectedKeys.value = ["2"];
-      openKeys.value = ["sub1"];
-    } else if (newval.includes("/policy")) {
-      selectedKeys.value = ["4"];
-      openKeys.value = ["sub1"];
-    } else if (newval.includes("/target")) {
-      selectedKeys.value = ["3"];
-      openKeys.value = ["sub1"];
-    } else {
-      let routerk = router.getRoutes().find((el: any) => el.path === newval)
-        ?.meta?.key as string;
-      selectedKeys.value = [routerk];
-    }
+    let routerk = router.getRoutes().find((el: any) => el.path === newval)?.meta
+      ?.key as string;
+    selectedKeys.value = [routerk];
   },
   { immediate: true, deep: true }
 );

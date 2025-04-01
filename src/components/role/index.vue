@@ -1,102 +1,122 @@
 <template>
   <div class="container-box">
     <a-form
-      layout="inline"
+      class="form-box"
       :model="formState"
       @finish="handleFinish"
       @finishFailed="handleFinishFailed"
     >
-      <a-form-item label="角色名">
-        <a-input v-model:value="formState.role_name" />
-      </a-form-item>
-      <a-form-item label="角色描述">
-        <a-input v-model:value="formState.desc" />
-      </a-form-item>
-      <a-form-item label="角色状态">
-        <a-select
-          v-model:value="formState.state"
-          @change="onChange"
-          style="width: 200px"
+      <a-row :gutter="16" style="margin: 0">
+        <a-col class="gutter-row" :span="20">
+          <a-row :gutter="16">
+            <a-col class="gutter-row" :span="6">
+              <a-form-item label="角色名">
+                <a-input v-model:value="formState.role_name" />
+              </a-form-item>
+            </a-col>
+            <a-col class="gutter-row" :span="6">
+              <a-form-item label="角色描述">
+                <a-input v-model:value="formState.desc" />
+              </a-form-item>
+            </a-col>
+            <a-col class="gutter-row" :span="6">
+              <a-form-item label="角色状态">
+                <a-select v-model:value="formState.state" @change="onChange">
+                  <a-select-option :value="1">使用中</a-select-option>
+                  <a-select-option :value="0">禁用</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col class="gutter-row" :span="6">
+              <a-form-item label="创建时间">
+                <a-date-picker
+                  placeholder=""
+                  v-model:value="formState.created_time"
+                  value-format="YYYY-MM-DD"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-col>
+        <a-col
+          :span="4"
+          style="
+            display: flex;
+            justify-content: flex-end;
+            align-items: start;
+            padding-bottom: 16px;
+            padding: 0;
+          "
         >
-          <a-select-option :value="1">使用中</a-select-option>
-          <a-select-option :value="0">禁用</a-select-option>
-        </a-select>
-      </a-form-item>
-      <a-form-item label="创建时间">
-        <a-date-picker
-          placeholder=""
-          style="width: 200px"
-          v-model:value="formState.created_time"
-          value-format="YYYY-MM-DD"
-        />
-      </a-form-item>
-      <a-form-item>
+          <a-button
+            type="primary"
+            html-type="submit"
+            style="margin-right: 20px"
+            @click="search"
+          >
+            查询
+          </a-button>
+          <a-button type="primary" html-type="reset" @click="reset">
+            重置
+          </a-button>
+        </a-col>
+      </a-row>
+    </a-form>
+    <div class="table-box">
+      <div class="add-btn">
         <a-button
           type="primary"
           html-type="addUser"
           @click="showEditModal(null)"
-          style="margin-right: 20px"
         >
           新增
         </a-button>
-        <a-button
-          type="primary"
-          html-type="submit"
-          style="margin-right: 20px"
-          @click="search"
-        >
-          查询
-        </a-button>
-        <a-button type="primary" html-type="reset" @click="reset">
-          重置
-        </a-button>
-      </a-form-item>
-    </a-form>
-
-    <a-table
-      :columns="roleColumns"
-      :data-source="roleList"
-      size="small"
-      class="ant-table-striped"
-      :row-class-name="
-        (_record, index) => (index % 2 === 1 ? 'table-striped' : null)
-      "
-    >
-      <template #bodyCell="{ column, text, record }">
-        <template v-if="column.dataIndex === 'state'">
-          <a-switch
-            v-model:checked="record.state"
-            size="small"
-            @click="onChangeVal(record)"
-          />
-        </template>
-        <template v-if="column.dataIndex === 'operation'">
-          <div class="btn-groups">
-            <a-button
+      </div>
+      <a-table
+        :columns="roleColumns"
+        :data-source="roleList"
+        size="small"
+        class="ant-table-striped"
+        :row-class-name="
+          (_record, index) => (index % 2 === 1 ? 'table-striped' : null)
+        "
+      >
+        <template #bodyCell="{ column, text, record }">
+          <template v-if="column.dataIndex === 'state'">
+            <a-switch
+              v-model:checked="record.state"
               size="small"
-              @click="showEditModal(record)"
-              type="link"
-              :disabled="
-                record.id == 1 && getStorage('routerInfo').user.id != 1
-              "
-              >修改</a-button
-            >
-
-            <a-popconfirm
-              title="确定删除？"
-              ok-text="是"
-              cancel-text="否"
-              @confirm="confirmDel(record)"
-              @cancel="cancelDel"
-            >
-              <a-button size="small" type="link" :disabled="record.id == 1"
-                >删除</a-button
+              @click="onChangeVal(record)"
+            />
+          </template>
+          <template v-if="column.dataIndex === 'operation'">
+            <div class="btn-groups">
+              <a-button
+                size="small"
+                @click="showEditModal(record)"
+                type="link"
+                :disabled="
+                  record.id == 1 && getStorage('routerInfo').user.id != 1
+                "
+                >编辑</a-button
               >
-            </a-popconfirm>
-          </div>
+
+              <a-popconfirm
+                title="确定删除？"
+                ok-text="是"
+                cancel-text="否"
+                @confirm="confirmDel(record)"
+                @cancel="cancelDel"
+              >
+                <a-button size="small" type="link" :disabled="record.id == 1"
+                  >删除</a-button
+                >
+              </a-popconfirm>
+            </div>
+          </template>
         </template>
-      </template>
-    </a-table>
+      </a-table>
+    </div>
     <a-modal
       v-model:open="openModal"
       :title="roleForm.id ? '编辑' : '新增'"
@@ -402,6 +422,17 @@ const roleColumns = ref([
   align-items: center;
   .ant-btn {
     padding: 0;
+  }
+}
+.table-box {
+  height: calc(100vh - 200px);
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  .add-btn {
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: flex-end;
   }
 }
 </style>

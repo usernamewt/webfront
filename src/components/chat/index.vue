@@ -71,7 +71,11 @@
       </div>
     </div>
     <!-- 聊天消息区域 -->
-    <div class="chat-messages" ref="messagesContainer">
+    <div
+      class="chat-messages"
+      ref="messagesContainer"
+      :style="{ backgroundImage: `url(${chatUser.partner_bgavatar})` }"
+    >
       <div
         v-for="message in chat_messages"
         :key="message.id"
@@ -82,13 +86,15 @@
           <img
             :src="
               message.isUser
-                ? `${host}${getStorage('routerInfo').user.avatar}`
-                : `${host}${chatUser.partner_avatar}`
+                ? `${getStorage('routerInfo').user.avatar}`
+                : `${chatUser.partner_avatar}`
             "
           />
         </div>
         <div class="message-bubble">
-          <div class="message-content">{{ message.content }}</div>
+          <div class="message-content">
+            {{ message.content }}
+          </div>
           <div class="message-time">{{ formatTime(message.timestamp) }}</div>
         </div>
       </div>
@@ -150,7 +156,6 @@ const messagesContainer = ref<any>(null);
 const host = ref("");
 onMounted(() => {
   host.value = "http://47.120.49.37:8082/";
-
   socket.initSocket();
   socket.socket.on("new_message", (data: any) => {
     // message.success(data.message);
@@ -355,6 +360,9 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 }
 
 .message {
@@ -388,13 +396,14 @@ onUnmounted(() => {
   flex-direction: column;
   height: calc(100vh - 130px);
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .chat-messages {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
-  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(5px);
 }
 

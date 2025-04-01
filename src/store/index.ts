@@ -37,6 +37,7 @@ export const useTestStore = defineStore("BaseStore", {
       menuCollapsed: false,
       socket: {} as any,
       socketMsg: {} as any,
+      sPermession: {} as any,
     };
   },
 

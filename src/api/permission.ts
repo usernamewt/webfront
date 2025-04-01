@@ -17,9 +17,13 @@ export const getRolePermission = (data: any): Res<ItypeAPI<any>> => {
 export const addPermission = (data: any): Res<ItypeAPI<any>> => {
   return request.post("/permission/add", data);
 };
+// 修改权限
+export const updatePermission = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/permission/update", data);
+};
 
 // 删除权限
-export const deletePermission = (data: any): Res<ItypeAPI<any>> => {
+export const delPermission = (data: any): Res<ItypeAPI<any>> => {
   return request.post("/permission/delete", data);
 };
 

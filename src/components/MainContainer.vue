@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from "vue";
+import { computed, h, nextTick, onMounted, ref, watch } from "vue";
 import Header from "./layout/Header.vue";
 import router from "../router";
-import svgIcon from "./layout/svg-icon.vue";
+import bus from "../utils/bus";
 import { useRoute } from "vue-router";
 import { useTestStore } from "../store";
+import MenuIcon from "./layout/menu-icon.vue";
 const store = useTestStore();
 const route = useRoute();
 const baseMenu = ref<any[]>([]);
@@ -24,20 +25,21 @@ const openKeys = ref<string[]>([]);
 
 // 处理menu切换
 const handelmenuswitch = (item: any) => {
-  console.log(item);
-  const path =
-    baseMenu.value.find((el) => el.meta.key === item.key)?.path || "/404";
   // router.push({ path: "/redirect", query: { path } });
-  router.push({ path });
+  bus.emit("icon-check", item.item.key);
+  router.push({ path: item.item.path });
 };
 onMounted(() => {
   const menu = router
     .getRoutes()
-    .filter((el: any) => el.meta.title && el.meta.hidden !== true)
+    .filter((el: any) => el.meta.title && el.meta.hidden == true)
     .sort((a: any, b: any) => a.meta.key - b.meta.key);
+  console.log(router.getRoutes());
+
+  console.log(menu);
+
   nextTick(() => {
     baseMenu.value = menu;
-    console.log(baseMenu.value);
   });
 });
 watch(
@@ -49,6 +51,39 @@ watch(
   },
   { immediate: true, deep: true }
 );
+
+const menuList = computed(() => {
+  let menus = JSON.parse(JSON.stringify(store.sPermession));
+  let menu = totrees(menus);
+  return menu;
+});
+const totrees = (menu: any) => {
+  let arr = menu.map((el: any) => {
+    if (el.children) {
+      return {
+        ...seriesTree(el),
+        children: totrees(el.children),
+      };
+    }
+    return seriesTree(el);
+  });
+  return arr;
+};
+const seriesTree = (menu: any) => {
+  return {
+    key: menu.sort,
+    label: menu.title,
+    icon: () =>
+      h(MenuIcon, {
+        title: menu.title,
+        icon: menu.checkIcon,
+        actIcon: menu.ckeckedIcon,
+        key: menu.sort,
+      }),
+    title: menu.title,
+    path: menu.component,
+  };
+};
 </script>
 <template>
   <a-layout style="min-height: 100vh">
@@ -58,7 +93,7 @@ watch(
       :trigger="null"
       @collapse="onCollapse"
       @breakpoint="onBreakpoint"
-      width="10vw"
+      width="12vw"
     >
       <div class="logo">
         <span v-show="!store.menuCollapsed">
@@ -74,8 +109,10 @@ watch(
         v-model:openKeys="openKeys"
         theme="light"
         @click="handelmenuswitch"
+        :items="menuList"
+        mode="inline"
       >
-        <a-menu-item
+        <!-- <a-menu-item
           v-for="item in baseMenu"
           :key="item.meta.key"
           class="nav-items-flex"
@@ -91,21 +128,12 @@ watch(
           </template>
 
           <span class="nav-text">{{ item.meta.title }}</span>
-        </a-menu-item>
+        </a-menu-item> -->
       </a-menu>
     </a-layout-sider>
     <a-layout>
       <Header />
-      <div
-        style="
-          box-sizing: border-box;
-          padding: 21px;
-          height: calc(100vh - 60px);
-          border-radius: 10px;
-          background-color: #f2f3f5;
-          overflow-y: scroll;
-        "
-      >
+      <div class="w-container">
         <!-- 子路由 -->
         <router-view v-slot="{ Component }">
           <transition :name="'slide-fade'" mode="out-in">
@@ -198,5 +226,14 @@ watch(
 .slide-fade-leave-to {
   opacity: 0;
   // transform: translateX(-50%);
+}
+
+.w-container {
+  box-sizing: border-box;
+  padding: 12px;
+  height: calc(100vh - 60px);
+  border-radius: 10px;
+  background-color: #f2f3f5;
+  overflow-y: scroll;
 }
 </style>

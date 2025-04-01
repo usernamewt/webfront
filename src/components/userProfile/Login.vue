@@ -147,7 +147,8 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref } from "vue";
 import { useLocale } from "../../hooks/languageHook";
-import { setStorage } from "../../utils/storage";
+import { useTestStore } from "../../store/index";
+const baseStore = useTestStore();
 import { setToken } from "../../utils/auth";
 import { getUserMenu, userLogin } from "../../api/user";
 import verifyCode from "../common/verifyCode.vue";
@@ -195,11 +196,12 @@ const onFinish = () => {
       userLogin(formPassword).then((res: any) => {
         if (res.code == 0) {
           setToken(res.data);
-          getUserMenu().then((res) => {
-            setStorage("routerInfo", res.data);
-            nextTick(() => {
-              router.push("/user");
-            });
+          // getUserMenu().then((res) => {
+          //   setStorage("routerInfo", res.data);
+
+          // });
+          nextTick(() => {
+            setupRoutes();
           });
         } else {
           message.error(res.msg);
@@ -207,6 +209,20 @@ const onFinish = () => {
       });
     })
     .catch(() => {});
+};
+
+const setupRoutes = () => {
+  setTimeout(() => {
+    nextTick(() => {
+      const urls = baseStore.currentRouter.split("?redirect=/");
+      const redirect = urls[urls.length - 1];
+      if (redirect && router.hasRoute(redirect)) {
+        router.push({ path: "/redirect", query: { path: redirect } });
+      } else {
+        router.push({ path: "/redirect", query: { path: "/" } });
+      }
+    });
+  }, 0);
 };
 </script>
 

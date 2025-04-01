@@ -1,6 +1,6 @@
 <template>
   <a-upload-dragger
-    style="width: 302px"
+    :style="{ width: props.boxWidth }"
     :before-upload="beforeUpload"
     :max-count="1"
     v-model:fileList="fileList"
@@ -43,6 +43,10 @@ import { onUnmounted, ref, watch } from "vue";
 const furl = ref("");
 
 const props = defineProps({
+  boxWidth: {
+    type: String,
+    default: "302px",
+  },
   width: {
     type: Number,
     default: 200,

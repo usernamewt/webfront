@@ -14,7 +14,7 @@
       <span
         ><LeftOutlined
           style="margin-right: 10px; cursor: pointer"
-          v-if="route.meta.hidden && route.path !== '/manager'"
+          v-if="!route.meta.hidden && route.path !== '/manager'"
           @click="router.push('/manager')"
         />{{ header }}</span
       >

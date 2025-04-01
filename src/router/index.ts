@@ -1,71 +1,21 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import { getUserMenu } from "../api/user";
-import { getStorage, removeStorage, setStorage } from "../utils/storage";
+import { removeStorage, setStorage } from "../utils/storage";
 import { nextTick } from "vue";
+import { useTestStore } from "../store";
+const baseStore = useTestStore();
+const modules = import.meta.glob("../components/**/**.vue");
 
 // tenantList  deviceRegist  targetManage  acceryManager
 // 定义静态路由
 const routes: Array<RouteRecordRaw> = [
   // 主页面路由
-  {
-    path: "/",
-    name: "Home",
-    redirect: "/user",
-  },
+
   {
     path: "/Layout",
     name: "Layout",
     component: () => import("../components/MainContainer.vue"),
-    children: [
-      {
-        path: "/user",
-        name: "user",
-        component: () => import("../components/user/index.vue"),
-        meta: {
-          title: "用户管理",
-          key: "1",
-          checkIcon: "icon-user-check",
-          ckeckedIcon: "icon-user-checked",
-          hidden: false,
-        },
-      },
-      {
-        path: "/role",
-        name: "role",
-        component: () => import("../components/role/index.vue"),
-        meta: {
-          title: "角色管理",
-          key: "2",
-          checkIcon: "icon-role-check",
-          ckeckedIcon: "icon-role-checked",
-          hidden: false,
-        },
-      },
-      {
-        path: "/menu",
-        name: "menu",
-        component: () => import("../components/menu/index.vue"),
-        meta: {
-          title: "菜单管理",
-          key: "3",
-          checkIcon: "icon-menu-check",
-          ckeckedIcon: "icon-menu-checked",
-          hidden: false,
-        },
-      },
-      {
-        path: "/chat",
-        name: "chat",
-        component: () => import("../components/chat/index.vue"),
-        meta: {
-          title: "客服中心",
-          key: "4",
-          checkIcon: "icon-chat-check",
-          ckeckedIcon: "icon-chat-checked",
-          hidden: false,
-        },
-      },
-    ],
+    children: [],
   },
   // 登陆路由
   {
@@ -97,29 +47,80 @@ const router = createRouter({
 });
 
 // 动态路由添加或删除
-export async function dynamicRouter() {}
+export async function dynamicRouter() {
+  // 覆盖默认的Layout路由
+  await router.addRoute({
+    path: "/Layout",
+    name: "Layout",
+    component: () => import("../components/MainContainer.vue"),
+    children: [],
+  });
+  let routerInfo = {} as any;
+  let res = await getUserMenu();
+  if (res.code == 0) {
+    routerInfo = res.data as any;
+    setStorage("routerInfo", routerInfo);
+  } else {
+    removeStorage("routerInfo");
+    return;
+  }
+  let routers = routerInfo.permissions;
+  routers = routers.filter((row: any) => row.is_hidden === 0);
 
-router.beforeEach((to, from, next) => {
-  let routerInfo = getStorage("routerInfo");
+  baseStore.sPermession = routers;
+  let dynamicRoutes = getAllRoute(routers) as any[];
+  let baseRoute = dynamicRoutes.find((el) => el.component).component;
+  dynamicRoutes.forEach((row: any) => {
+    const items = seriesTree(row);
+    console.log(items);
+
+    if (items.meta.hidden && items.meta.component)
+      router.addRoute("Layout", items);
+  });
+  router.addRoute({
+    path: "/",
+    name: "Home",
+    redirect: baseRoute,
+  });
+}
+
+const getAllRoute = (items: any) => {
+  let rout = items.flatMap(({ children = [], ...node }) => [
+    node,
+    ...getAllRoute(children),
+  ]);
+  return rout;
+};
+
+const seriesTree = (item: any) => {
+  let name = (item.component || "/").split("/")[1];
+  return {
+    path: item.component,
+    name: name,
+    component: modules[`${item.path}`],
+    meta: {
+      title: item.title,
+      key: item.sort,
+      checkIcon: item.checkIcon,
+      ckeckedIcon: item.ckeckedIcon,
+      hidden: item.is_hidden ? false : true,
+      children: item.children,
+      component: item.component,
+    },
+  };
+};
+
+router.beforeEach(async (to, from, next) => {
+  baseStore.currentRouter = to.fullPath;
   if (to.path.includes("login")) {
     return next();
   }
-  nextTick(async () => {
-    if (routerInfo && routerInfo.user) {
-      console.log("有缓存路由");
-      next();
-    } else {
-      console.log("无缓存路由");
-      let res = await getUserMenu();
-      if (res.code == 0) {
-        let routerInfo = res.data;
-        setStorage("routerInfo", routerInfo);
-        next();
-      } else {
-        removeStorage("routerInfo");
-        next("/login");
-      }
-    }
+  // if(from.path.includes("login")){
+  //   retru
+  // }
+  await dynamicRouter();
+  nextTick(() => {
+    next();
   });
 });
 

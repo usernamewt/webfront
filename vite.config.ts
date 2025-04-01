@@ -1,9 +1,9 @@
 import { defineConfig, loadEnv } from "vite";
-import path from "node:path";
+import path from "path";
 import vue from "@vitejs/plugin-vue";
 import Components from "unplugin-vue-components/vite";
 import { AntDesignVueResolver } from "unplugin-vue-components/resolvers";
-
+import vueJsx from "@vitejs/plugin-vue-jsx";
 import { createSvgIconsPlugin } from "vite-plugin-svg-icons";
 
 // https://vite.dev/config/
@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       vue(),
+      vueJsx(),
       Components({
         resolvers: [
           AntDesignVueResolver({
@@ -27,8 +28,9 @@ export default defineConfig(({ mode }) => {
     resolve: {
       extensions: [".js", ".jsx", ".ts", ".tsx", ".json", ".vue"],
       alias: {
-        "@": path.resolve(__dirname, "src"),
-        "@Request": path.resolve(__dirname, "src/api"),
+        "@": path.resolve(__dirname, "./src"),
+        "@Request": path.resolve(__dirname, "./src/api/index"),
+        "@components": path.resolve(__dirname, "./src/components"),
       },
     },
     server: {
@@ -49,6 +51,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       sourcemap: false,
+      target: "esnext",
       minify: "terser",
       terserOptions: {
         compress: {

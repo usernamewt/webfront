@@ -17,7 +17,15 @@
       style="display: flex; justify-content: center"
     >
       <inbox-outlined v-if="furl == ''"></inbox-outlined>
-      <img v-else :src="furl" alt="" :width="props.width" />
+      <div v-else :style="{width:props.boxWidth}" class="img-box-container">
+        <div class="img-box" :style="{ backgroundImage: `url(${furl})`,height:'90px',width:'150px' }">
+            <div class="img-operation">
+                <EyeOutlined style="margin-right: 10px;" class="img-operation-item" @click.stop="previewItem(furl)"/>
+                <DeleteOutlined class="img-operation-item"/>
+            </div>
+        </div>
+      </div>
+      <!-- <img v-else :src="furl" alt="" :width="props.width" /> -->
     </p>
     <p
       class="ant-upload-text"
@@ -34,14 +42,26 @@
       拖拽或点击上传
     </p>
   </a-upload-dragger>
+  <a-modal :open="previewVisible" :title="previewTitle" :footer="null" @cancel="handleCancel">
+      <img alt="example" style="width: 100%" :src="previewImage" />
+    </a-modal>
 </template>
 <script setup lang="ts">
-import { InboxOutlined } from "@ant-design/icons-vue";
+import { InboxOutlined,EyeOutlined,DeleteOutlined } from "@ant-design/icons-vue";
 import { message } from "ant-design-vue";
 import type { UploadChangeParam } from "ant-design-vue";
 import { onUnmounted, ref, watch } from "vue";
 const furl = ref("");
-
+const previewVisible = ref(false);
+const previewTitle = ref("图片预览");
+const previewImage = ref("");
+const previewItem = (url: string) => {
+  previewImage.value = url;
+  previewVisible.value = true;
+};
+const handleCancel = () => {
+  previewVisible.value = false;
+};
 const props = defineProps({
   boxWidth: {
     type: String,
@@ -117,4 +137,47 @@ defineExpose({
   reset,
 });
 </script>
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+
+.img-box-container {
+    padding: 10px;display: flex;
+    justify-content: center;
+    .img-box {
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    .img-operation {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        font-size: 10px;
+        align-items: center;
+        justify-content: center;
+        width: 100%;justify-content: center;
+        height: 100%;
+        .img-operation-item {
+            cursor: pointer;
+            font-size: 16px !important;
+            color: #fff !important;
+            &:hover {
+                color: #1890ff !important;
+            }
+        }
+    }
+    &:hover {
+        .img-operation {
+            display: flex;
+        }
+    }
+}
+}
+</style>
+

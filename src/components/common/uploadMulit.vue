@@ -16,7 +16,6 @@
       class="ant-upload-drag-icon"
       style="display: flex; justify-content: center"
     >
-    {{  }}
       <inbox-outlined v-if="furl.length==0"></inbox-outlined>
       <div v-else :style="{width:props.boxWidth}" class="img-box-container">
         <div class="img-box" v-for="item in furl" :key="item" :style="{ backgroundImage: `url(${item})`,height:'90px',width:'150px' }">

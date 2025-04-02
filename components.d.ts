@@ -63,6 +63,7 @@ declare module 'vue' {
     MainContainer: typeof import('./src/components/MainContainer.vue')['default']
     Menu: typeof import('./src/components/menu/index.vue')['default']
     MenuIcon: typeof import('./src/components/layout/menu-icon.vue')['default']
+    NavConfig: typeof import('./src/components/goods/navConfig.vue')['default']
     Redirect: typeof import('./src/components/userProfile/redirect.vue')['default']
     Register: typeof import('./src/components/userProfile/Register.vue')['default']
     Role: typeof import('./src/components/role/index.vue')['default']

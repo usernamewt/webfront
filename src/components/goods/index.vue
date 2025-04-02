@@ -81,9 +81,14 @@
           <template v-if="column.dataIndex === 'name'">
             <a>{{ text }}</a>
           </template>
-          <template v-if="column.dataIndex === 'state'">
+          <template v-if="column.dataIndex === 'head_img'">
+            <img :src="record.head_img" style="width: 50px; height: 50px" />
+          </template>
+          <template v-if="column.dataIndex === 'status'">
             <a-switch
-              v-model:checked="record.state"
+              :checkedValue="1"
+              :unCheckedValue="0"
+              v-model:checked="record.status"
               size="small"
               @click="onChangeVal(record)"
             />
@@ -137,7 +142,6 @@
           <a-col :span="8">
             <a-form-item
               label="商品名称"
-              v-if="!goodsForm.id"
               name="product_name"
               :rules="[{ required: true, message: '请输入商品名称' }]"
             >
@@ -146,19 +150,11 @@
                 :rules="[{ required: true }]"
               />
             </a-form-item>
-            <a-form-item
-              label="商品描述"
-              v-if="!goodsForm.id"
-              name="description"
-            >
+            <a-form-item label="商品描述" name="description">
               <a-input v-model:value="goodsForm.description" />
             </a-form-item>
 
-            <a-form-item
-              label="商品分类"
-              v-if="!goodsForm.id"
-              name="category_id"
-            >
+            <a-form-item label="商品分类" name="category_id">
               <a-select
                 v-model:value="goodsForm.cate_id"
                 :options="categoryList"
@@ -167,7 +163,6 @@
             </a-form-item>
             <a-form-item
               label="商品库存"
-              v-if="!goodsForm.id"
               name="stock"
               :rules="[{ required: true, message: '请输入商品库存' }]"
             >
@@ -207,18 +202,26 @@
               name="is_hot"
               :rules="[{ required: true, message: '请选择是否热门' }]"
             >
-              <a-switch v-model:checked="goodsForm.is_hot" />
+              <a-switch
+                :checkedValue="1"
+                :unCheckedValue="0"
+                v-model:checked="goodsForm.is_hot"
+              />
             </a-form-item>
             <a-form-item
               label="是否上架"
               name="status"
               :rules="[{ required: true, message: '请选择是否上架' }]"
             >
-              <a-switch v-model:checked="goodsForm.status" />
+              <a-switch
+                :checkedValue="1"
+                :unCheckedValue="0"
+                v-model:checked="goodsForm.status"
+              />
             </a-form-item>
           </a-col>
           <a-col :span="16">
-            <a-form-item label="商品详情" v-if="!goodsForm.id" name="detail">
+            <a-form-item label="商品详情" name="detail">
               <formEditorVue
                 :texts="goodsForm.detail"
                 @updata_text="handelEditerText"
@@ -249,7 +252,6 @@
 <script lang="ts" setup>
 import { onMounted, ref, h, nextTick } from "vue";
 import { Button, notification, message } from "ant-design-vue";
-import { updateUser, deleteUser, updateUserStatus } from "../../api/user";
 import api from "../../api/index";
 import uploadSingle from "../common/uploadSingle.vue";
 import uploadMuli from "../common/uploadMulit.vue";
@@ -303,7 +305,6 @@ const searchFrom = ref({
   stock: "",
   created_time: "",
 });
-const currentRow = ref<FormState>();
 const labelCol = { style: { width: "80px" } };
 const wrapperCol = { span: 14 };
 const categoryList = ref([]);
@@ -313,7 +314,6 @@ const goodsFormRef = ref();
 const bUpload = ref();
 const aUpload = ref();
 const openModal = ref(false);
-const resetPwd = ref(false);
 const handelImgAvatar = (res: any) => {
   goodsForm.value.head_img = res;
 };
@@ -339,7 +339,6 @@ const getClassifitions = async () => {
       title: el.cate_name,
     };
   });
-  console.log(categoryList.value);
 };
 const search = async () => {
   let params = {
@@ -352,15 +351,13 @@ const search = async () => {
   userTable.value = data.data.rows;
 };
 const handleCancel = () => {
-  handelResrt();
+  handelReset();
   bUpload.value.reset();
   aUpload.value?.reset();
   openModal.value = false;
 };
 const handleOk = async () => {
   console.log(JSON.parse(JSON.stringify(goodsForm.value)));
-
-  // return;
   goodsFormRef.value.validate().then(() => {
     let params: any = {
       ...goodsForm.value,
@@ -397,7 +394,7 @@ const handleOk = async () => {
 };
 
 const confirmDel = (record: any) => {
-  deleteUser({ id: record.id }).then((res) => {
+  api.goods.deleteGoods({ id: record.id }).then((res) => {
     if (res.code === 0) {
       message.success(res.msg);
       search();
@@ -409,21 +406,15 @@ const confirmDel = (record: any) => {
 const cancelDel = () => {
   message.info("取消删除");
 };
-const handelReset = (record: any) => {
-  currentRow.value = record;
-  nextTick(() => {
-    resetPwd.value = true;
-  });
-};
 
 const showEditModal = (record: any) => {
-  console.log(record);
   if (record) {
     goodsForm.value = {
       ...record,
+      carousel_img: record.carousel_img.split(","),
     };
   } else {
-    handelResrt();
+    handelReset();
   }
 
   nextTick(() => {
@@ -431,7 +422,7 @@ const showEditModal = (record: any) => {
   });
 };
 
-const handelResrt = () => {
+const handelReset = () => {
   goodsForm.value = {
     product_name: "",
     description: "",
@@ -451,11 +442,11 @@ const onChange = (value: string) => {
   console.log(`selected ${value}`);
 };
 const onChangeVal = (record: any) => {
-  if (record.state) {
-    updateUserStatus({ id: record.id, state: 1 }).then((res) => {
+  if (record.status) {
+    api.goods.changeGoodsStatus({ id: record.id, status: 1 }).then((res) => {
       if (res.code === 0) {
         message.success(res.msg);
-        record.state = true;
+        record.status = true;
         notification.close(key);
       } else {
         message.error(res.msg);
@@ -463,11 +454,11 @@ const onChangeVal = (record: any) => {
     });
     return;
   }
-  record.state = true;
+  record.status = true;
   const key = `open${Date.now()}`;
   notification.warning({
     message: "修改状态",
-    detail: "确定要修改用户状态吗？修改后，该用户将无法登录系统，请谨慎操作！",
+    description: "确定要修改商品的上/下架状态？",
     btn: () =>
       h(
         Button,
@@ -475,15 +466,17 @@ const onChangeVal = (record: any) => {
           type: "primary",
           size: "small",
           onClick: () => {
-            updateUserStatus({ id: record.id, state: 0 }).then((res) => {
-              if (res.code === 0) {
-                message.success(res.msg);
-                record.state = false;
-                notification.close(key);
-              } else {
-                message.error(res.msg);
-              }
-            });
+            api.goods
+              .changeGoodsStatus({ id: record.id, status: 0 })
+              .then((res) => {
+                if (res.code === 0) {
+                  message.success(res.msg);
+                  record.status = false;
+                  notification.close(key);
+                } else {
+                  message.error(res.msg);
+                }
+              });
             notification.close(key);
           },
         },
@@ -491,7 +484,7 @@ const onChangeVal = (record: any) => {
       ),
     key,
     onClose: () => {
-      record.state = true;
+      record.status = true;
     },
   });
 };

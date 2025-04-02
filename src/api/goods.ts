@@ -17,3 +17,13 @@ export const addGoods = (data: any): Res<ItypeAPI<any>> => {
 export const editGoods = (data: any): Res<ItypeAPI<any>> => {
   return request.post("/goods/edit", data);
 };
+
+// 删除商品
+export const deleteGoods = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/goods/delete", data);
+};
+
+// 上/下架商品
+export const changeGoodsStatus = (data: any): Res<ItypeAPI<any>> => {
+  return request.post("/goods/changeStatus", data);
+};

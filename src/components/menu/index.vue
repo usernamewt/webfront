@@ -559,6 +559,7 @@ const menuColumns = ref([
     key: "path",
     ellipsis: true,
     align: "center",
+    width: 350,
   },
   {
     title: "操作",

@@ -63,7 +63,7 @@
         </a-col>
       </a-row>
     </a-form>
-    <div class="table-box">
+    <div class="table-box" ref="tbBox">
       <div class="add-btn">
         <a-button
           type="primary"
@@ -78,6 +78,7 @@
         :data-source="userTable"
         size="small"
         class="ant-table-striped"
+        :scroll="{ y: baseScroll }"
         :row-class-name="
           (_record, index) => (index % 2 === 1 ? 'table-striped' : null)
         "
@@ -270,9 +271,12 @@ const currentRow = ref<User>();
 const bgImg = ref("");
 const labelCol = { style: { width: "80px" } };
 const wrapperCol = { span: 14 };
+const baseScroll = ref(0);
+const tbBox = ref();
 onMounted(() => {
   search();
   getRoles();
+  baseScroll.value = tbBox.value.offsetHeight - 180;
 });
 interface FormState {
   nickname: string;

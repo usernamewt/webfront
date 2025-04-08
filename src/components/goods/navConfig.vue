@@ -1,6 +1,9 @@
 <template>
   <div class="container-box">
-    <div class="table-box" ref="tbBox">
+    <div class="table-box" ref="navTbBox">
+      <div class="add-btn">
+        <a-button type="primary" @click="showEditModal(null)"> 新增 </a-button>
+      </div>
       <a-table
         :columns="navColumns"
         :data-source="navTable"
@@ -17,11 +20,40 @@
           </template>
           <template v-if="column.dataIndex === 'img_url'">
             <uploadSingle
+              :boxWidth="'200px'"
               :def-avater="record.img_url"
               @upload="handelImgAvatar($event, record)"
             />
           </template>
+          <template v-if="column.dataIndex === 'type'">
+            <a-tag :color="dColor(text)">{{ dNavType(text) }}</a-tag>
+          </template>
           <template v-if="column.dataIndex === 'operation'">
+            <div class="btn-groups">
+              <a-button
+                size="small"
+                @click="showEditModal(record)"
+                type="link"
+                :disabled="
+                  record.id == 1 && getStorage('routerInfo').user.id != 1
+                "
+                >编辑</a-button
+              >
+
+              <a-popconfirm
+                title="确定删除？"
+                ok-text="是"
+                cancel-text="否"
+                @confirm="confirmDel(record)"
+                @cancel="cancelDel"
+              >
+                <a-button size="small" type="link" :disabled="record.id == 1"
+                  >删除</a-button
+                >
+              </a-popconfirm>
+            </div>
+          </template>
+          <template v-if="column.dataIndex === 'action'">
             <div class="btn-groups">
               <a-button
                 size="small"
@@ -49,20 +81,78 @@
         </template>
       </a-table>
     </div>
+    <a-modal
+      v-model:open="openModal"
+      :title="goodsForm.id ? '编辑轮播图' : '新增轮播图'"
+      centered
+      @ok="handleOk"
+      @cancel="handleCancel"
+      :okText="'确定'"
+      :cancelText="'取消'"
+      style="width: 45vw"
+    >
+      <a-form
+        :model="goodsForm"
+        :label-col="labelCol"
+        :wrapper-col="wrapperCol"
+        ref="goodsFormRef"
+      >
+        <a-form-item
+          label="轮播图名称"
+          name="title"
+          :rules="[{ required: true, message: '请输入商品名称' }]"
+        >
+          <a-input
+            v-model:value="goodsForm.title"
+            :rules="[{ required: true }]"
+          />
+        </a-form-item>
+        <a-form-item label="轮播图">
+          <uploadSingle
+            ref="aUpload"
+            :box-width="'100%'"
+            :def-avater="goodsForm?.img_url"
+            @upload="handelImgAvatar"
+          />
+        </a-form-item>
+        <a-form-item label="轮播图类型" name="description">
+          <a-select v-model:value="goodsForm.type">
+            <a-select-option :value="0">无跳转</a-select-option>
+            <a-select-option :value="1">商品详情</a-select-option>
+            <a-select-option :value="2">活动页</a-select-option>
+            <a-select-option :value="3">外链</a-select-option>
+          </a-select>
+        </a-form-item>
+
+        <a-form-item label="轮播图跳转地址" name="category_id">
+          <a-input v-model:value="goodsForm.jump_address"></a-input>
+        </a-form-item>
+        <a-form-item
+          label="排序"
+          name="sort"
+          :rules="[{ required: true, message: '请输入商品库存' }]"
+        >
+          <a-input-number
+            style="width: 100%"
+            v-model:value="goodsForm.sort"
+            :min="0"
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 <script lang="ts" setup>
-import { onMounted, ref, h, nextTick } from "vue";
-import { Button, notification, message } from "ant-design-vue";
+import { onMounted, ref, nextTick } from "vue";
+import { message } from "ant-design-vue";
 import api from "../../api/index";
 import uploadSingle from "../common/uploadSingle.vue";
-import { filterEmptyValues } from "../../utils/tools";
 import { getStorage } from "../../utils/storage";
 
 onMounted(() => {
   search();
   getClassifitions();
-  baseScroll.value = tbBox.value.offsetHeight - 180;
+  baseScroll.value = navTbBox.value.offsetHeight - 180;
 });
 interface FormState {
   id?: number;
@@ -80,46 +170,45 @@ const goodsForm = ref<FormState>({
   jump_address: "",
   type: 0,
 });
+const labelCol = { style: { width: "120px" } };
+const wrapperCol = { span: 14 };
 const categoryList = ref([]);
-const tbBox = ref();
+const navTbBox = ref();
 const baseScroll = ref(0);
 const goodsFormRef = ref();
-const bUpload = ref();
 const aUpload = ref();
 const openModal = ref(false);
 const navTable = ref<any[]>([]);
-const handelImgAvatar = (e: any, msg: any) => {
-  console.log(e);
-  console.log(msg);
-  msg.img_url = e;
-  const params = {
-    ...msg,
-    img_url: e,
-  };
-  api.navconfig.editNav(params).then((res) => {
-    if (res.code === 0) {
-      message.success(res.msg);
-      search();
-    } else {
-      message.error(res.msg);
-    }
-  });
+const handelImgAvatar = (e: any) => {
+  goodsForm.value.img_url = e;
 };
-const handelImg = (res: any) => {
-  goodsForm.value.carousel_img = res;
+const dNavType = (type: number) => {
+  switch (type) {
+    case 0:
+      return "无跳转";
+    case 1:
+      return "商品详情";
+    case 2:
+      return "活动页";
+    case 3:
+      return "外链";
+  }
 };
-const reset = () => {
-  search();
-};
-const handelEditerText = (res: any) => {
-  goodsForm.value.detail = res;
+const dColor = (type: number) => {
+  switch (type) {
+    case 0:
+      return "orange";
+    case 1:
+      return "green";
+    case 2:
+      return "blue";
+    case 3:
+      return "cyan";
+  }
 };
 const getClassifitions = async () => {
-  let data = await api.classification.getClassifitionList({
-    currentPage: 1,
-    pageSize: 1000,
-  });
-  categoryList.value = data.data.rows.map((el) => {
+  let data = await api.classification.getClassifitionList();
+  categoryList.value = data.data.rows.map((el: any) => {
     return {
       key: el.id,
       value: el.id,
@@ -134,37 +223,30 @@ const search = async () => {
 };
 const handleCancel = () => {
   handelReset();
-  bUpload.value.reset();
   aUpload.value?.reset();
   openModal.value = false;
 };
 const handleOk = async () => {
-  console.log(JSON.parse(JSON.stringify(goodsForm.value)));
   goodsFormRef.value.validate().then(() => {
     let params: any = {
       ...goodsForm.value,
-      carousel_img: goodsForm.value.carousel_img.join(","),
     };
     if (!goodsForm.value.id) {
       // 新增
-      const reqparam = filterEmptyValues(params);
-      api.goods.addGoods(reqparam).then((res) => {
+      api.navconfig.addNav(params).then((res) => {
         if (res.code === 0) {
-          search();
           message.success(res.msg);
-          openModal.value = false;
           handleCancel();
+          search();
         } else {
           message.error(res.msg);
         }
       });
     } else {
       // 编辑
-      const reqparam = filterEmptyValues(params);
-      api.goods.editGoods(reqparam).then((res) => {
+      api.navconfig.editNav(params).then((res) => {
         if (res.code === 0) {
           message.success(res.msg);
-          openModal.value = false;
           handleCancel();
           search();
         } else {
@@ -176,7 +258,7 @@ const handleOk = async () => {
 };
 
 const confirmDel = (record: any) => {
-  api.goods.deleteGoods({ id: record.id }).then((res) => {
+  api.navconfig.delNav({ id: record.id }).then((res) => {
     if (res.code === 0) {
       message.success(res.msg);
       search();
@@ -190,10 +272,10 @@ const cancelDel = () => {
 };
 
 const showEditModal = (record: any) => {
+  console.log(record);
   if (record) {
     goodsForm.value = {
       ...record,
-      carousel_img: record.carousel_img.split(","),
     };
   } else {
     handelReset();
@@ -206,69 +288,12 @@ const showEditModal = (record: any) => {
 
 const handelReset = () => {
   goodsForm.value = {
-    product_name: "",
-    description: "",
-    detail: "",
-    is_hot: 0,
-    sale_price: 0.1,
-    original_price: 0.1,
-    head_img: "",
-    carousel_img: [],
-    cate_id: undefined,
-    status: undefined,
-    stock: 0,
-    version: "",
+    title: "",
+    img_url: "",
+    sort: 0,
+    jump_address: "",
+    type: 0,
   };
-};
-const onChange = (value: string) => {
-  console.log(`selected ${value}`);
-};
-const onChangeVal = (record: any) => {
-  if (record.status) {
-    api.goods.changeGoodsStatus({ id: record.id, status: 1 }).then((res) => {
-      if (res.code === 0) {
-        message.success(res.msg);
-        record.status = true;
-        notification.close(key);
-      } else {
-        message.error(res.msg);
-      }
-    });
-    return;
-  }
-  record.status = true;
-  const key = `open${Date.now()}`;
-  notification.warning({
-    message: "修改状态",
-    description: "确定要修改商品的上/下架状态？",
-    btn: () =>
-      h(
-        Button,
-        {
-          type: "primary",
-          size: "small",
-          onClick: () => {
-            api.goods
-              .changeGoodsStatus({ id: record.id, status: 0 })
-              .then((res) => {
-                if (res.code === 0) {
-                  message.success(res.msg);
-                  record.status = false;
-                  notification.close(key);
-                } else {
-                  message.error(res.msg);
-                }
-              });
-            notification.close(key);
-          },
-        },
-        { default: () => "确定" }
-      ),
-    key,
-    onClose: () => {
-      record.status = true;
-    },
-  });
 };
 
 const navColumns = ref([
@@ -284,6 +309,7 @@ const navColumns = ref([
     key: "img_url",
     ellipsis: true,
     align: "center",
+    width: 220,
   },
   {
     title: "轮播图类型",
@@ -305,6 +331,13 @@ const navColumns = ref([
     ellipsis: true,
     align: "center",
   },
+  {
+    title: "操作",
+    dataIndex: "action",
+    key: "action",
+    align: "center",
+    width: 100,
+  },
 ]);
 </script>
 
@@ -318,7 +351,7 @@ const navColumns = ref([
   }
 }
 .table-box {
-  height: calc(100vh - 200px);
+  height: calc(100vh - 150px);
   background-color: #fff;
   border-radius: 12px;
   padding: 12px;

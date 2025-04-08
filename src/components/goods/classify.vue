@@ -1,80 +1,134 @@
 <template>
   <div class="container-box">
-    <div class="table-box" ref="tbBox">
-      <a-table
-        :columns="menuColumns"
-        :data-source="menuData"
-        :pagination="false"
-        :scroll="{ y: baseScroll }"
-      >
-        <template #customFilterIcon="{ filtered }">
-          <search-outlined
-            :style="{ color: filtered ? '#108ee9' : undefined }"
-          />
-        </template>
-        <template
-          #customFilterDropdown="{
-            setSelectedKeys,
-            selectedKeys,
-            confirm,
-            clearFilters,
-            column,
-          }"
+    <a-form
+      class="form-box"
+      :model="formState"
+      @finish="handleFinish"
+      @finishFailed="handleFinishFailed"
+    >
+      <a-row :gutter="16" style="margin: 0">
+        <a-col class="gutter-row" :span="20">
+          <a-row :gutter="16">
+            <a-col class="gutter-row" :span="6">
+              <a-form-item label="角色名">
+                <a-input v-model:value="formState.role_name" />
+              </a-form-item>
+            </a-col>
+            <a-col class="gutter-row" :span="6">
+              <a-form-item label="角色描述">
+                <a-input v-model:value="formState.desc" />
+              </a-form-item>
+            </a-col>
+            <a-col class="gutter-row" :span="6">
+              <a-form-item label="角色状态">
+                <a-select v-model:value="formState.state" @change="onChange">
+                  <a-select-option :value="1">使用中</a-select-option>
+                  <a-select-option :value="0">禁用</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col class="gutter-row" :span="6">
+              <a-form-item label="创建时间">
+                <a-date-picker
+                  placeholder=""
+                  v-model:value="formState.created_time"
+                  value-format="YYYY-MM-DD"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-col>
+        <a-col
+          :span="4"
+          style="
+            display: flex;
+            justify-content: flex-end;
+            align-items: start;
+            padding-bottom: 16px;
+            padding: 0;
+          "
         >
-          <div style="padding: 8px">
-            <a-input
-              ref="searchInput"
-              :placeholder="`Search ${column.dataIndex}`"
-              :value="selectedKeys[0]"
-              style="width: 188px; margin-bottom: 8px; display: block"
-              @change="
-                (e:any) => setSelectedKeys(e.target.value ? [e.target.value] : [])
-              "
-              @pressEnter="
-                handleSearch(selectedKeys, confirm, column.dataIndex)
-              "
+          <a-button
+            type="primary"
+            html-type="submit"
+            style="margin-right: 20px"
+            @click="search"
+          >
+            查询
+          </a-button>
+          <a-button type="primary" html-type="reset" @click="reset">
+            重置
+          </a-button>
+        </a-col>
+      </a-row>
+    </a-form>
+    <div class="table-box" ref="tbBox">
+      <div class="add-btn">
+        <a-button
+          type="primary"
+          html-type="addUser"
+          @click="showEditModal(null)"
+        >
+          新增
+        </a-button>
+      </div>
+      <a-table
+        :columns="classifyColumns"
+        :data-source="roleList"
+        size="small"
+        class="ant-table-striped"
+        :scroll="{ y: baseScroll }"
+        :row-class-name="
+          (_record, index) => (index % 2 === 1 ? 'table-striped' : null)
+        "
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'state'">
+            <a-switch
+              v-model:checked="record.state"
+              size="small"
+              @click="onChangeVal(record)"
             />
-            <a-button
-              type="primary"
-              size="small"
-              style="width: 90px; margin-right: 8px"
-              @click="handleSearch(selectedKeys, confirm, column.dataIndex)"
-            >
-              <template #icon><SearchOutlined /></template>
-              查询
-            </a-button>
-            <a-button
-              size="small"
-              style="width: 90px"
-              @click="handleReset(clearFilters)"
-            >
-              重置
-            </a-button>
-          </div>
-        </template>
-        <template #bodyCell="{ column, text, record }">
+          </template>
+
+          <template v-if="column.dataIndex === 'cate_img'">
+            <img
+              :src="record.cate_img"
+              alt=""
+              style="width: 50px; height: 50px"
+            />
+          </template>
           <template v-if="column.dataIndex === 'operation'">
-            <div style="display: flex; justify-content: space-between">
-              <a @click="handelEditMenu(record)">编辑</a>
-              <a @click="handelAddMenu(record)">添加</a>
+            <div class="btn-groups">
+              <a-button
+                size="small"
+                @click="showEditModal(record)"
+                type="link"
+                :disabled="
+                  record.id == 1 && getStorage('routerInfo').user.id != 1
+                "
+                >编辑</a-button
+              >
+
               <a-popconfirm
                 title="确定删除？"
                 ok-text="是"
                 cancel-text="否"
-                @confirm="handelDelMenu(record)"
+                @confirm="confirmDel(record)"
+                @cancel="cancelDel"
               >
-                <a-button size="small" type="link">删除</a-button>
+                <a-button size="small" type="link" :disabled="record.id == 1"
+                  >删除</a-button
+                >
               </a-popconfirm>
             </div>
           </template>
         </template>
       </a-table>
     </div>
-
     <a-modal
       v-model:open="openModal"
-      style="width: 40vw"
-      :title="persForm.id ? '编辑' : '新增'"
+      :title="clasForm.id ? '编辑' : '新增'"
       centered
       @ok="handleOk"
       @cancel="handleCancel"
@@ -82,414 +136,266 @@
       :cancelText="'取消'"
     >
       <a-form
-        :model="persForm"
+        :model="clasForm"
         :label-col="labelCol"
         :wrapper-col="wrapperCol"
         ref="userFormRef"
-        style="width: 100%"
+        style="max-height: 40vh; height: 40vh; overflow-y: scroll"
       >
         <a-form-item
-          label="上级菜单"
-          name="fid"
-          :rules="[{ required: true, message: '请选择上级菜单' }]"
+          label="分类名称"
+          name="cate_name"
+          :rules="[{ required: true, message: '请输入用户名' }]"
         >
-          <a-tree-select
-            v-model:value="persForm.fid"
-            :fieldNames="{ label: 'title', key: 'id', value: 'id' }"
-            :treeDefaultExpandedKeys="[0]"
-            show-search
-            style="width: 100%"
-            :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
-            placeholder="Please select"
-            allow-clear
-            :tree-data="menuperData"
-            tree-node-filter-prop="title"
-          >
-          </a-tree-select>
-        </a-form-item>
-        <a-form-item
-          label="菜单类型"
-          name="level"
-          :rules="[{ required: true, message: '请选择菜单类型' }]"
-        >
-          <a-radio-group
-            v-model:value="persForm.level"
-            :options="plainOptions"
+          <a-input
+            v-model:value="clasForm.cate_name"
+            :rules="[{ required: true }]"
           />
         </a-form-item>
-        <a-form-item
-          label="菜单名称"
-          name="title"
-          :rules="[{ required: true, message: '请输入菜单名称' }]"
-        >
-          <a-input v-model:value="persForm.title" />
+
+        <a-form-item label="分类图片">
+          <uploadSingle
+            ref="aUpload"
+            :box-width="'100%'"
+            :def-avater="clasForm?.cate_img"
+            @upload="handelImgAvatar"
+          />
         </a-form-item>
-        <a-form-item v-if="persForm.level !== -1" label="菜单图标">
-          <div
-            style="
-              display: flex;
-              flex-wrap: nowrap;
-              justify-content: space-between;
-            "
-          >
-            <div style="width: 48%">
-              <transition name="fade">
-                <div class="icon-box" v-if="showIconModaldef">
-                  <span
-                    class="icon-item"
-                    :class="{ active: persForm.icondef === item }"
-                    v-for="item in svgList"
-                    :key="item"
-                    @mousedown="persForm.icondef = item"
-                    ><svg-icon :name="item" />&nbsp;&nbsp;<span
-                      style="text-wrap: nowrap"
-                      >{{ item }}</span
-                    ></span
-                  >
-                </div>
-              </transition>
-              <a-input
-                v-model:value="persForm.icondef"
-                @focus="showIconModaldef = true"
-                @blur.stop.prevent="showIconModaldef = false"
-              >
-                <template #prefix>
-                  默认：<svg-icon :name="persForm.icondef!" />
-                </template>
-              </a-input>
-            </div>
-            <div style="width: 48%">
-              <transition name="fade">
-                <div class="icon-box" v-if="showIconModalact">
-                  <span
-                    class="icon-item"
-                    :class="{ active: persForm.iconact === item }"
-                    v-for="item in svgList"
-                    :key="item"
-                    @mousedown="persForm.iconact = item"
-                    ><svg-icon :name="item" />&nbsp;&nbsp;<span
-                      style="text-wrap: nowrap"
-                      >{{ item }}</span
-                    ></span
-                  >
-                </div>
-              </transition>
-              <a-input
-                v-model:value="persForm.iconact"
-                @focus="showIconModalact = true"
-                @blur.stop.prevent="showIconModalact = false"
-              >
-                <template #prefix>
-                  激活：<svg-icon :name="persForm.iconact!" />
-                </template>
-              </a-input>
-            </div>
-          </div>
+
+        <a-form-item label="分类排序" name="sort" :rules="[{ required: true }]">
+          <a-input v-model:value="clasForm.sort" />
         </a-form-item>
         <a-form-item
-          label="是否外链"
-          v-if="persForm.level !== -1"
-          name="isFrame"
-          :rules="[{ required: true, message: '请选择是否外链' }]"
-        >
-          <a-radio-group v-model:value="persForm.isFrame" name="radioGroup">
-            <a-radio :value="0">是</a-radio>
-            <a-radio :value="1">否</a-radio>
-          </a-radio-group>
-        </a-form-item>
-        <a-form-item
-          v-if="persForm.level !== -1"
-          label="菜单状态"
+          label="分类状态"
           name="state"
-          :rules="[{ required: true, message: '请选择菜单状态' }]"
+          :rules="[{ required: true }]"
         >
-          <a-radio-group v-model:value="persForm.state" name="radioGroup">
-            <a-radio :value="0">启用</a-radio>
-            <a-radio :value="1">禁用</a-radio>
-          </a-radio-group>
-        </a-form-item>
-        <a-form-item
-          v-if="persForm.level !== -1"
-          label="是否显示"
-          name="is_hidden"
-          :rules="[{ required: true, message: '请选择菜单是否显示' }]"
-        >
-          <a-radio-group v-model:value="persForm.is_hidden" name="radioGroup">
-            <a-radio :value="0">是</a-radio>
-            <a-radio :value="1">否</a-radio>
-          </a-radio-group>
-        </a-form-item>
-        <a-form-item
-          v-if="persForm.level === 1"
-          label="路由地址"
-          name="component"
-          :rules="[{ required: true, message: '请输入路由地址' }]"
-        >
-          <a-input v-model:value="persForm.component" />
-        </a-form-item>
-        <a-form-item
-          v-if="persForm.level === 1"
-          label="组件路径"
-          name="path"
-          :rules="[{ required: true, message: '请输入组件路径' }]"
-        >
-          <a-input v-model:value="persForm.path" />
-        </a-form-item>
-        <a-form-item
-          v-if="persForm.level !== 0"
-          label="权限字符"
-          name="perms"
-          :rules="[{ required: true, message: '请输入权限字符' }]"
-        >
-          <a-input v-model:value="persForm.perms" />
-        </a-form-item>
-        <a-form-item
-          v-if="persForm.level !== 0"
-          label="权限备注"
-          name="mark"
-          :rules="[{ required: true, message: '请输入备注' }]"
-        >
-          <a-input v-model:value="persForm.mark" />
-        </a-form-item>
-        <a-form-item
-          label="显示排序"
-          name="sort"
-          :rules="[{ required: true, message: '请输入排序' }]"
-        >
-          <a-input-number
-            v-model:value="persForm.sort"
-            :min="0"
-            :max="100000"
-          />
+          <a-switch v-model:checked="clasForm.state" size="small" />
         </a-form-item>
       </a-form>
     </a-modal>
   </div>
 </template>
 <script lang="ts" setup>
-import { onMounted, ref, reactive, nextTick } from "vue";
-import { SearchOutlined } from "@ant-design/icons-vue";
+import { onMounted, ref, h, nextTick } from "vue";
+import { FormProps, Button, notification, message } from "ant-design-vue";
 import api from "../../api/index";
-import svgIcon from "../layout/svg-icon.vue";
-import { message } from "ant-design-vue";
-import moment from "moment";
 import { filterEmptyValues } from "../../utils/tools";
-type Pers = {
-  id?: string;
-  fid?: number; //父级id
-  title: string; //菜单名称
-  sort?: number; //排序
-  level?: number; //菜单等级0:一级菜单 1:二级菜单，-1:操作
-  icondef?: string; //图标默认
-  iconact?: string; //图标激活
-  component?: string; //组件路径
+import { getStorage } from "../../utils/storage";
+const labelCol = { style: { width: "80px" } };
+const treeData = ref<any[]>([]);
+const wrapperCol = { span: 14 };
+const baseScroll = ref(0);
+const tbBox = ref();
+type clas = {
+  id?: number;
+  cate_name: string;
+  cate_img: string;
+  sort: number;
   created_time?: string;
   updated_time?: string;
-  perms: string; //权限标识
-  mark: string; //备注
-  path?: string;
-  isFrame?: number; //是否外链
-  state?: number; //菜单状态
-  is_hidden?: number; //是否隐藏
+  state: boolean;
 };
-const userFormRef = ref();
-const labelCol = { style: { width: "80px" } };
-const wrapperCol = { span: 14 };
-const menuData = ref<any>([]);
-const menuperData = ref<any>([]);
-const svgList = ref<any>([]);
-const showIconModaldef = ref(false);
-const showIconModalact = ref(false);
-const tbBox = ref();
-const baseScroll = ref(0);
-const plainOptions = [
-  { label: "目录", value: 0 },
-  { label: "菜单", value: 1 },
-  { label: "按钮", value: -1 },
-];
-const persForm = ref<Pers>({
-  id: "",
-  fid: undefined,
-  title: "",
-  sort: 0,
-  level: 0,
-  icondef: "",
-  iconact: "",
-  component: "",
-  perms: "",
-  created_time: "",
-  updated_time: "",
-  mark: "",
-  path: "",
-  isFrame: 1,
-  state: 0,
-  is_hidden: 0,
-});
-const openModal = ref(false);
 onMounted(() => {
   search();
-  initSvg();
-  baseScroll.value = tbBox.value.offsetHeight - 80;
+  getPermission();
+  baseScroll.value = tbBox.value.offsetHeight - 180;
 });
-const search = async () => {
+const formState = ref({
+  role_name: "",
+  state: "",
+  desc: "",
+  created_time: "",
+});
+const clasForm = ref<clas>({
+  id: 0,
+  cate_name: "",
+  cate_img: "",
+  sort: 0,
+  created_time: "",
+  updated_time: "",
+  state: true,
+});
+const userFormRef = ref();
+const openModal = ref(false);
+const roleList = ref<any[]>([]);
+const checkedKeys = ref<string[]>([]);
+const expandedKeys = ref<string[]>([]);
+const handelImgAvatar = (val: any) => {
+  clasForm.value.cate_img = val;
+};
+const getPermission = async () => {
   let data = await api.permission.getAllPermission();
-  menuData.value = data.data;
-  menuperData.value = [
-    {
-      id: 0,
-      title: "主类目",
-      children: data.data,
-    },
-  ];
-};
-const initSvg = () => {
-  const svgModules = import.meta.glob("/src/assets/icons/*.svg", {
-    eager: true,
-  });
-
-  // 获取 SVG 文件的名称
-  const svgFileNames = Object.keys(svgModules).map((filePath) => {
-    return filePath.split("/").pop()?.split(".svg")[0]; // 提取文件名
-  });
-  svgList.value = svgFileNames;
-};
-const searchInput = ref();
-const state = reactive({
-  searchText: "",
-  searchedColumn: "",
-});
-const handleSearch = (selectedKeys: any, confirm: any, dataIndex: any) => {
-  confirm();
-  state.searchText = selectedKeys[0];
-  state.searchedColumn = dataIndex;
-};
-
-const handelEditMenu = (record: any) => {
-  persForm.value = JSON.parse(JSON.stringify(record));
-  openModal.value = true;
-};
-const handelAddMenu = (record: any) => {
-  persForm.value.fid = record.id;
-  openModal.value = true;
-};
-
-const handelDelMenu = async (record: any) => {
-  let res = await api.permission.delPermission({ id: record.id });
-  if (res.code === 0) {
-    message.success(res.msg);
-    nextTick(() => {
-      search();
-    });
-  } else {
-    message.error(res.msg);
+  if (data.code === 0) {
+    treeData.value = data.data;
   }
 };
-const handleReset = (clearFilters: any) => {
-  clearFilters({ confirm: true });
-  state.searchText = "";
-};
-const handleOk = async () => {
-  const form = await userFormRef.value.validate();
-  if (form) {
-    let params = { ...persForm.value };
-    if (persForm.value.id) {
-      // 更新
-      params.updated_time = moment().format("YYYY-MM-DD HH:mm:ss");
-      params = filterEmptyValues(params);
-      let res = await api.permission.updatePermission(params);
-      if (res.code === 0) {
-        message.success(res.msg);
-        openModal.value = false;
-        nextTick(() => {
-          search();
-        });
-      } else {
-        message.error(res.msg);
-      }
-    } else {
-      // 新增
-      params.created_time = moment().format("YYYY-MM-DD HH:mm:ss");
-      params.updated_time = moment().format("YYYY-MM-DD HH:mm:ss");
-      params = filterEmptyValues(params);
-      let res = await api.permission.addPermission(params);
-      if (res.code === 0) {
-        message.success(res.msg);
-        openModal.value = false;
-        nextTick(() => {
-          search();
-        });
-      } else {
-        message.error(res.msg);
-      }
-    }
-  }
-};
-const handleCancel = () => {
-  // 清空表单
-  persForm.value = {
-    id: "",
-    fid: undefined,
-    title: "",
-    sort: 0,
-    level: 0,
-    icondef: "",
-    iconact: "",
-    component: "",
-    perms: "",
+const reset = () => {
+  formState.value = {
+    role_name: "",
+    state: "",
+    desc: "",
     created_time: "",
-    updated_time: "",
-    mark: "",
-    path: "",
-    isFrame: 1,
-    state: 0,
-    is_hidden: 0,
   };
   nextTick(() => {
-    openModal.value = false;
+    search();
   });
 };
-const menuColumns = ref([
-  {
-    title: "菜单名称",
-    dataIndex: "title",
-    key: "title",
-    align: "center",
-    customFilterDropdown: true,
-    onFilter: (value: any, record: any) =>
-      record.title.toString().toLowerCase().includes(value.toLowerCase()),
-    onFilterDropdownOpenChange: (visible: any) => {
-      if (visible) {
-        setTimeout(() => {
-          searchInput.value.focus();
-        }, 100);
+const search = async () => {
+  let data = await api.classification.getClassifitionList();
+  roleList.value = data.data.rows.map((el: any) => {
+    return {
+      ...el,
+      state: el.state === 1 ? true : false,
+    };
+  });
+};
+const handleCancel = () => {
+  clasForm.value = {
+    cate_name: "",
+    cate_img: "",
+    sort: 0,
+    state: true,
+  };
+  openModal.value = false;
+};
+const handleOk = () => {
+  userFormRef.value.validate().then(() => {
+    let params: any = { ...clasForm.value };
+    console.log(params);
+    if (!clasForm.value.id) {
+      // 新增
+      const reqparam = filterEmptyValues(params);
+      api.classification.addClassifition(reqparam).then((res) => {
+        if (res.code === 0) {
+          message.success(res.msg);
+          openModal.value = false;
+          handleCancel();
+          search();
+        } else {
+          message.error(res.msg);
+        }
+      });
+    } else {
+      // 编辑
+      params["id"] = clasForm.value.id;
+      const reqparam = filterEmptyValues(params);
+      api.classification.updateClassifition(reqparam).then((res) => {
+        if (res.code === 0) {
+          message.success(res.msg);
+          openModal.value = false;
+          handleCancel();
+          search();
+        } else {
+          message.error(res.msg);
+        }
+      });
+    }
+  });
+};
+
+const confirmDel = (record: any) => {
+  deleteUser({ id: record.id }).then((res) => {
+    if (res.code === 0) {
+      message.success(res.msg);
+      search();
+    } else {
+      message.error(res.msg);
+    }
+  });
+};
+const cancelDel = () => {
+  message.info("取消删除");
+};
+
+const showEditModal = (record: any) => {
+  console.log(record);
+  if (record) {
+    clasForm.value = {
+      ...record,
+    };
+    // selectedKeys.value = record.permission_ids.split(",").map(Number);
+  } else {
+    clasForm.value = {
+      cate_name: "",
+      cate_img: "",
+      sort: 0,
+      state: true,
+    };
+    checkedKeys.value = [];
+    expandedKeys.value = [];
+  }
+
+  nextTick(() => {
+    openModal.value = true;
+  });
+};
+const handleFinish: FormProps["onFinish"] = (values) => {
+  console.log(values, formState);
+};
+const handleFinishFailed: FormProps["onFinishFailed"] = (errors) => {
+  console.log(errors);
+};
+
+const onChange = (value: string) => {
+  console.log(`selected ${value}`);
+};
+
+const onChangeVal = (record: any) => {
+  if (record.state) {
+    api.role.editRoleState({ id: record.id, state: 1 }).then((res) => {
+      if (res.code === 0) {
+        message.success(res.msg);
+        record.state = true;
+        notification.close(key);
+      } else {
+        message.error(res.msg);
       }
+    });
+  }
+  record.state = true;
+  const key = `open${Date.now()}`;
+  notification.warning({
+    message: "修改状态",
+    description: "确定要修改角色状态吗？修改后，该角色将失效，请谨慎操作！",
+    btn: () =>
+      h(
+        Button,
+        {
+          type: "primary",
+          size: "small",
+          onClick: () => {
+            api.role.editRoleState({ id: record.id, state: 0 }).then((res) => {
+              if (res.code === 0) {
+                message.success(res.msg);
+                record.state = false;
+                notification.close(key);
+              } else {
+                message.error(res.msg);
+              }
+            });
+          },
+        },
+        { default: () => "确定" }
+      ),
+    key,
+    onClose: () => {
+      record.state = true;
     },
-  },
+  });
+};
+
+const classifyColumns = ref([
   {
-    title: "图标",
-    dataIndex: "icon",
-    key: "icon",
-    ellipsis: true,
+    title: "分类名称",
+    dataIndex: "cate_name",
+    key: "cate_name",
     align: "center",
   },
   {
-    title: "菜单路径",
-    dataIndex: "component",
-    key: "component",
-    ellipsis: true,
-    align: "center",
-  },
-  {
-    title: "权限标识",
-    dataIndex: "perms",
-    key: "perms",
-    ellipsis: true,
-    align: "center",
-  },
-  {
-    title: "备注",
-    dataIndex: "mark",
-    key: "mark",
+    title: "分类图片",
+    dataIndex: "cate_img",
+    key: "cate_img",
     ellipsis: true,
     align: "center",
   },
@@ -501,19 +407,33 @@ const menuColumns = ref([
     align: "center",
   },
   {
-    title: "组件路径",
-    dataIndex: "path",
-    key: "path",
+    title: "状态",
+    dataIndex: "state",
+    key: "state",
     ellipsis: true,
     align: "center",
   },
   {
-    title: "操作",
+    title: "创建时间",
+    dataIndex: "created_time",
+    key: "created_time",
+    ellipsis: true,
+    align: "center",
+  },
+  {
+    title: "更新时间",
+    dataIndex: "updated_time",
+    key: "updated_time",
+    ellipsis: true,
+    align: "center",
+  },
+  {
+    title: "状态",
     dataIndex: "operation",
     key: "operation",
     ellipsis: true,
     align: "center",
-    width: 140,
+    width: 90,
   },
 ]);
 </script>
@@ -527,61 +447,15 @@ const menuColumns = ref([
     padding: 0;
   }
 }
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-.icon-box {
-  position: absolute;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-gap: 10px;
-  width: calc(40vw - 150px);
-  background-color: #fff;
-  border-radius: 10px;
-  padding: 10px;
-  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08),
-    0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
-  margin-top: 40px;
-  z-index: 9999;
-  height: 250px;
-  overflow-y: scroll;
-  .active {
-    background-color: #ccc;
-  }
-  .icon-item {
-    cursor: pointer;
-    display: flex;
-    justify-content: flex-start;
-    padding-left: 4px;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    // border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-    span {
-      display: inline-block;
-      overflow: hidden;
-      max-width: 100px;
-      text-overflow: ellipsis;
-    }
-    &:hover {
-      background-color: #ccc;
-    }
-  }
-}
-
 .table-box {
-  height: calc(100vh - 120px);
-  padding: 12px;
-  border-radius: 12px;
+  height: calc(100vh - 200px);
   background-color: #fff;
-  overflow: hidden;
+  border-radius: 12px;
+  padding: 12px;
+  .add-btn {
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: flex-end;
+  }
 }
 </style>

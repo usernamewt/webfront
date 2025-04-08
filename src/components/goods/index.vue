@@ -130,7 +130,7 @@
       @cancel="handleCancel"
       :okText="'确定'"
       :cancelText="'取消'"
-      style="width: 65vw"
+      style="width: 80vw"
     >
       <a-form
         :model="goodsForm"

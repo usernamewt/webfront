@@ -62,7 +62,7 @@
         </a-col>
       </a-row>
     </a-form>
-    <div class="table-box">
+    <div class="table-box" ref="tbBox">
       <div class="add-btn">
         <a-button
           type="primary"
@@ -77,6 +77,7 @@
         :data-source="roleList"
         size="small"
         class="ant-table-striped"
+        :scroll="{ y: baseScroll }"
         :row-class-name="
           (_record, index) => (index % 2 === 1 ? 'table-striped' : null)
         "
@@ -176,9 +177,12 @@ import { getStorage } from "../../utils/storage";
 const labelCol = { style: { width: "80px" } };
 const treeData = ref<any[]>([]);
 const wrapperCol = { span: 14 };
+const baseScroll = ref(0);
+const tbBox = ref();
 onMounted(() => {
   search();
   getPermission();
+  baseScroll.value = tbBox.value.offsetHeight - 180;
 });
 const formState = ref({
   role_name: "",

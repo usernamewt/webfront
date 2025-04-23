@@ -157,8 +157,22 @@ const host = ref("");
 onMounted(() => {
   host.value = "http://47.120.49.37:8082/";
   socket.initSocket();
+
+  // 移除可能存在的旧监听器
+  socket.socket.off("new_message");
+
+  // 添加新的监听器
   socket.socket.on("new_message", (data: any) => {
-    // message.success(data.message);
+    // 添加消息去重逻辑
+    const messageId = data.id || `${data.from}_${data.timestamp}`;
+    const isDuplicate = chat_messages.value.some(
+      (msg) =>
+        msg.id === messageId ||
+        (msg.content === data.message && msg.timestamp === data.timestamp)
+    );
+
+    if (isDuplicate) return;
+
     if (to_id.value == -1) {
       userList.value = userList.value.map((el) => {
         if (el.partner_id === data.from) {
@@ -170,6 +184,7 @@ onMounted(() => {
     } else {
       if (to_id.value == chatUser.value.partner_id) {
         chat_messages.value.push({
+          id: messageId,
           content: data.message,
           isUser: data.from_id === form_id.value,
           timestamp: new Date().getTime(),
@@ -306,6 +321,8 @@ const sendMessage = () => {
 //   }, 1000);
 // };
 onUnmounted(() => {
+  // 清理事件监听器
+  socket.socket.off("new_message");
   // socket.value.disconnect();
 });
 </script>
@@ -320,7 +337,7 @@ onUnmounted(() => {
     color: #999;
   }
 }
-// 创建一个动画，点击后会让外层的a-card按照左上角为圆心晃动，模拟card右下角被往左的作用力“踢了一脚”
+// 创建一个动画，点击后会让外层的a-card按照左上角为圆心晃动，模拟card右下角被往左的作用力"踢了一脚"
 .shake {
   animation: shake 0.5s;
 }

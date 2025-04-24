@@ -1,5 +1,5 @@
 <template>
-  <div class="header">
+  <div class="header" :class="{ 'mobile-header': isMobile }">
     <div
       class="title"
       @click="() => (baseStore.menuCollapsed = !baseStore.menuCollapsed)"
@@ -20,40 +20,26 @@
       >
     </div>
     <div style="display: flex; align-items: center">
-      <!-- <span>欢迎用户：{{ getStorage("userPohone") }}</span
-      ><a-divider type="vertical" />
-      <a @click="logout" href="javascript:;" class="menu-i"
-        ><span>注销登录</span></a
-      > -->
       <a-dropdown>
-        <a-upload
-          v-model:file-list="fileList"
-          action="http://47.120.49.37:8082/api/upload"
-          @change="handleChange"
-          :headers="{ 'X-Requested-With': null }"
-          crossOrigin="anonymous"
-          :showUploadList="false"
-        >
-          <div
-            class="image-container"
-            style="position: relative; overflow: hidden"
-          >
-            <a-avatar
-              :src="avurl"
-              style="cursor: pointer"
-              class="avater-main"
-            />
-            <div class="slide-up-text">
-              <span>更改头像</span>
-            </div>
-          </div>
-        </a-upload>
+        <a-avatar :src="avurl" style="cursor: pointer" class="avater-main" />
         <template #overlay>
           <a-menu>
             <a-menu-item>
               <a href="javascript:;"
                 >欢迎：{{ getStorage("routerInfo")?.user.nickname || "" }}</a
               >
+            </a-menu-item>
+            <a-menu-item>
+              <a-upload
+                v-model:file-list="fileList"
+                action="http://47.120.49.37:8082/api/upload"
+                @change="handleChange"
+                :headers="{ 'X-Requested-With': null }"
+                crossOrigin="anonymous"
+                :showUploadList="false"
+              >
+                <a href="javascript:;">更换头像</a>
+              </a-upload>
             </a-menu-item>
             <a-menu-item>
               <a href="javascript:;">个人中心</a>
@@ -82,6 +68,14 @@ import { useRoute } from "vue-router";
 import { getStorage, removeStorage, setStorage } from "../../utils/storage";
 import { message, UploadChangeParam } from "ant-design-vue";
 import { removeToken } from "../../utils/auth";
+
+const props = defineProps({
+  isMobile: {
+    type: Boolean,
+    default: false,
+  },
+});
+
 const route = useRoute();
 const baseStore = useTestStore();
 const header = ref("设备列表");
@@ -234,5 +228,22 @@ const logout = () => {
 
 .image-container:hover .slide-up-text {
   bottom: 0;
+}
+
+.mobile-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.avater-main {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
 }
 </style>

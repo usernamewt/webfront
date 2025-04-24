@@ -6,9 +6,23 @@ import bus from "../utils/bus";
 import { useRoute } from "vue-router";
 import { useTestStore } from "../store";
 import MenuIcon from "./layout/menu-icon.vue";
+
 const store = useTestStore();
 const route = useRoute();
 const baseMenu = ref<any[]>([]);
+const isMobile = ref(false);
+
+// 检测是否为移动设备
+const checkMobile = () => {
+  isMobile.value =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+  if (isMobile.value) {
+    store.menuCollapsed = true;
+  }
+};
+
 const onCollapse = (collapsed: boolean, type: string) => {
   console.log(collapsed, type);
 };
@@ -25,15 +39,22 @@ const openKeys = ref<string[]>([]);
 
 // 处理menu切换
 const handelmenuswitch = (item: any) => {
-  // router.push({ path: "/redirect", query: { path } });
   bus.emit("icon-check", item.item.key);
   router.push({ path: item.item.path });
+  if (isMobile.value) {
+    store.menuCollapsed = true;
+  }
 };
+
 onMounted(() => {
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+
   const menu = router
     .getRoutes()
     .filter((el: any) => el.meta.title && el.meta.hidden == true)
     .sort((a: any, b: any) => a.meta.key - b.meta.key);
+
   console.log(router.getRoutes());
 
   console.log(menu);
@@ -42,6 +63,7 @@ onMounted(() => {
     baseMenu.value = menu;
   });
 });
+
 watch(
   () => route.fullPath,
   (newval) => {
@@ -57,6 +79,7 @@ const menuList = computed(() => {
   let menu = totrees(menus);
   return menu;
 });
+
 const totrees = (menu: any) => {
   let arr = menu.map((el: any) => {
     if (el.children) {
@@ -69,6 +92,7 @@ const totrees = (menu: any) => {
   });
   return arr;
 };
+
 const seriesTree = (menu: any) => {
   return {
     key: menu.sort,
@@ -85,6 +109,7 @@ const seriesTree = (menu: any) => {
   };
 };
 </script>
+
 <template>
   <a-layout style="min-height: 100vh">
     <a-layout-sider
@@ -93,7 +118,11 @@ const seriesTree = (menu: any) => {
       :trigger="null"
       @collapse="onCollapse"
       @breakpoint="onBreakpoint"
-      width="12vw"
+      :width="isMobile ? '100vw' : '12vw'"
+      :class="{
+        'mobile-sider': isMobile,
+        'mobile-sider-hidden': isMobile && store.menuCollapsed,
+      }"
     >
       <div class="logo">
         <span v-show="!store.menuCollapsed">
@@ -132,8 +161,8 @@ const seriesTree = (menu: any) => {
       </a-menu>
     </a-layout-sider>
     <a-layout>
-      <Header />
-      <div class="w-container">
+      <Header :is-mobile="isMobile" />
+      <div class="w-container" :style="isMobile ? 'margin-top: 60px' : ''">
         <!-- 子路由 -->
         <router-view v-slot="{ Component }">
           <transition :name="'slide-fade'" mode="out-in">
@@ -143,6 +172,7 @@ const seriesTree = (menu: any) => {
         <!-- <router-view></router-view> -->
       </div>
       <div
+        v-if="!isMobile"
         class="footer"
         :style="`width: calc(100vw - ${store.menuCollapsed ? 0 : 240}px);`"
       >
@@ -235,5 +265,18 @@ const seriesTree = (menu: any) => {
   border-radius: 10px;
   background-color: #f2f3f5;
   overflow-y: scroll;
+}
+
+.mobile-sider {
+  position: fixed;
+  height: 100vh;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  transition: transform 0.3s ease;
+}
+
+.mobile-sider-hidden {
+  transform: translateX(-100%);
 }
 </style>

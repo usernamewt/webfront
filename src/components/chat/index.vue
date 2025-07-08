@@ -1,58 +1,50 @@
 <template>
-  <a-row :gutter="16" v-if="to_id == -1">
-    <a-col
-      :xs="24"
-      :sm="12"
-      :md="8"
-      :lg="6"
-      :xl="4"
+  <div v-if="to_id == -1" class="chat-list-container">
+    <a-card
       v-for="user in userList"
       :key="user.id"
+      @click.stop="toChat(user)"
+      hoverable
+      :class="`${user.shake ? 'shake' : ''}`"
     >
-      <a-card
-        @click.stop="toChat(user)"
-        hoverable
-        style="margin-bottom: 20px"
-        :class="`${user.shake ? 'shake' : ''}`"
+      <template #cover>
+        <img
+          v-lazypng="user.partner_bgavatar"
+          width="300"
+          height="200"
+          style="object-fit: cover"
+        />
+      </template>
+      <template #actions>
+        <a-badge :dot="user.unread_count">
+          <MessageOutlined />
+        </a-badge>
+        <HeartOutlined />
+        <svgIcon
+          style="font-size: 1.3rem"
+          name="kick"
+          @click.stop.prevent="handleKick(user)"
+        />
+      </template>
+      <a-card-meta
+        :title="user.partner_nickname"
+        :description="`${
+          user.last_message ? user.last_message : '暂无最新消息'
+        }`"
       >
-        <template #cover>
+        <template #avatar>
           <img
-            v-lazypng="user.partner_bgavatar"
-            width="300"
-            height="200"
-            style="object-fit: cover"
+            style="border-radius: 50%"
+            v-lazypng="user.partner_avatar"
+            width="30"
+            height="30"
           />
+          <!-- <a-avatar :src="" /> -->
         </template>
-        <template #actions>
-          <a-badge :dot="user.unread_count">
-            <MessageOutlined />
-          </a-badge>
-          <HeartOutlined />
-          <svgIcon
-            style="font-size: 1.3rem"
-            name="kick"
-            @click.stop.prevent="handleKick(user)"
-          />
-        </template>
-        <a-card-meta
-          :title="user.partner_nickname"
-          :description="`${
-            user.last_message ? user.last_message : '暂无最新消息'
-          }`"
-        >
-          <template #avatar>
-            <img
-              style="border-radius: 50%"
-              v-lazypng="user.partner_avatar"
-              width="30"
-              height="30"
-            />
-            <!-- <a-avatar :src="" /> -->
-          </template>
-        </a-card-meta>
-      </a-card>
-    </a-col>
-  </a-row>
+      </a-card-meta>
+    </a-card>
+  </div>
+
   <div v-else class="chat-container">
     <div class="chat-header">
       <div class="header-content">
@@ -147,18 +139,28 @@ let socket = useTestStore();
 const userList = ref<any[]>([]);
 const chat_messages = ref<any[]>([]);
 const inputText = ref("");
-const loading = ref(false);
-const noMore = ref(false);
 const form_id = ref(1);
 const to_id = ref(-1);
 const chatUser = ref<any>(null);
 const messagesContainer = ref<any>(null);
 const host = ref("");
 onMounted(() => {
-  host.value = "http://47.120.49.37:8082/";
+  host.value = import.meta.env.BASE_URL;
   socket.initSocket();
+  // 移除可能存在的旧监听器
+  socket.socket.off("new_message");
+  // 添加新的监听器
   socket.socket.on("new_message", (data: any) => {
-    // message.success(data.message);
+    // 添加消息去重逻辑
+    const messageId = data.id || `${data.from}_${data.timestamp}`;
+    const isDuplicate = chat_messages.value.some(
+      (msg) =>
+        msg.id === messageId ||
+        (msg.content === data.message && msg.timestamp === data.timestamp)
+    );
+
+    if (isDuplicate) return;
+
     if (to_id.value == -1) {
       userList.value = userList.value.map((el) => {
         if (el.partner_id === data.from) {
@@ -170,6 +172,7 @@ onMounted(() => {
     } else {
       if (to_id.value == chatUser.value.partner_id) {
         chat_messages.value.push({
+          id: messageId,
           content: data.message,
           isUser: data.from_id === form_id.value,
           timestamp: new Date().getTime(),
@@ -185,13 +188,6 @@ onMounted(() => {
   });
   initUser();
 });
-// watch(
-//   () => socket.socketMsg,
-//   () => {
-//     message.success(socket.socketMsg);
-//   },
-//   { deep: true }
-// );
 const formatTime = (timestamp: number) => {
   const date = new Date(timestamp);
   const hours = date.getHours().toString().padStart(2, "0");
@@ -199,12 +195,6 @@ const formatTime = (timestamp: number) => {
   return `${hours}:${minutes}`;
 };
 
-const handleKick = (user: any) => {
-  user.shake = true;
-  setTimeout(() => {
-    user.shake = false;
-  }, 500);
-};
 const toChat = (user: any) => {
   console.log(user);
   user.active = true;
@@ -212,7 +202,6 @@ const toChat = (user: any) => {
   nextTick(() => {
     to_id.value = user.partner_id;
     chat_messages.value = [];
-    // TODO: 获取聊天记录
     getUserChat(user.partner_id).then((res: any) => {
       chat_messages.value = res.data.map((el) => {
         return {
@@ -255,14 +244,6 @@ const goBack = () => {
   to_id.value = -1;
 };
 
-const getDays = (date: string) => {
-  return date ? date.split("-")[1] + "-" + date.split("-")[2] : "";
-};
-
-const diasbledTextArea = computed(() => {
-  return to_id.value === -1;
-});
-
 const sendMessage = () => {
   if (inputText.value.trim()) {
     const message_val = {
@@ -282,384 +263,160 @@ const sendMessage = () => {
   }
 };
 
-// const handleScroll = (e: any) => {
-//   if (e.target.scrollTop === 0 && !loading.value && !noMore.value) {
-//     loadMoreMessages();
-//   }
-// };
+const handleKick = (user: any) => {
+  user.shake = true;
+  setTimeout(() => {
+    user.shake = false;
+  }, 500);
+};
 
-// const loadMoreMessages = () => {
-//   loading.value = true;
-//   setTimeout(() => {
-//     const newMessages = Array.from({ length: 10 }, (_) => ({
-//       from_id: form_id.value,
-//       to_id: to_id.value,
-//       content: messages.value,
-//       created_time: new Date().toLocaleTimeString(),
-//       updated_time: new Date().toLocaleTimeString(),
-//     }));
-//     messages.value = [...newMessages, ...messages.value];
-//     loading.value = false;
-//     if (messages.value.length >= 30) {
-//       noMore.value = true;
-//     }
-//   }, 1000);
-// };
 onUnmounted(() => {
-  // socket.value.disconnect();
+  // 清理事件监听器
+  socket.socket.off("new_message");
 });
 </script>
 
 <style scoped lang="less">
+// 聊天列表容器
+.chat-list-container {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 20px;
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+// 桌面端适配
+@media screen and (min-width: 768px) {
+  .chat-list-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// 平板端适配
+@media screen and (min-width: 576px) and (max-width: 767px) {
+  .chat-list-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+// 移动端适配
+@media screen and (max-width: 768px) {
+  .message-bubble {
+    max-width: 85%;
+  }
+
+  .toolbar {
+    padding: 8px;
+  }
+
+  .input-area {
+    padding: 10px;
+  }
+
+  .send-btn {
+    width: 80px;
+    right: 10px;
+    bottom: 10px;
+  }
+}
+
+// 用户列表样式
 .user-item {
+  transition: all 0.3s ease;
   &:hover {
     background-color: #237eff;
     color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(35, 126, 255, 0.2);
   }
   .message-time {
     color: #999;
   }
 }
-// 创建一个动画，点击后会让外层的a-card按照左上角为圆心晃动，模拟card右下角被往左的作用力“踢了一脚”
-.shake {
-  animation: shake 0.5s;
-}
-// 细化下面的动画
-@keyframes shake {
-  0% {
-    transform: translateX(-20px);
-    transform-origin: right;
-  }
-  25% {
-    transform-origin: right;
-    transform: translateX(10px);
-  }
-  50% {
-    transform-origin: right;
-    transform: translateX(-8px);
-  }
-  75% {
-    transform-origin: right;
-    transform: translateX(8);
-  }
-  100% {
-    transform-origin: right;
-    transform: translateX(0);
-  }
-}
 
-.active {
-  background-color: #237eff;
-  color: #fff;
-  .message-time {
-    color: #fff;
-  }
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-}
-
-.message {
-  margin-bottom: 12px;
-}
-
-.message-content {
-  padding: 8px 12px;
-  border-radius: 8px;
-  background-color: #f0f0f0;
-}
-
-.message-time {
-  font-size: 12px;
-  color: #999;
-  margin-top: 4px;
-}
-
-.chat-toolbar {
-  margin: 8px 0;
-}
-
-.no-more {
-  text-align: center;
-  color: #999;
-  padding: 8px;
-}
-
+// 聊天容器样式
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 130px);
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  border-radius: 12px;
+  height: calc(100vh - 90px);
+  background: linear-gradient(135deg, #f6f9fc 0%, #e9f2f9 100%);
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
+// 聊天消息区域
 .chat-messages {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.8);
 }
 
+// 消息气泡样式
 .message-item {
   display: flex;
-  gap: 20px;
-  margin-bottom: 15px;
-}
+  gap: 12px;
+  margin-bottom: 20px;
+  animation: fadeIn 0.3s ease;
 
-.message-item.user-message {
-  justify-content: flex-start;
-  flex-direction: row-reverse;
+  // 对方的消息
+  &:not(.user-message) {
+    justify-content: flex-start;
+
+    .message-bubble {
+      background: #fff;
+      color: #333;
+      border-top-left-radius: 4px;
+
+      .message-time {
+        color: #999;
+      }
+    }
+  }
+
+  // 自己的消息
+  &.user-message {
+    justify-content: flex-end;
+
+    .message-bubble {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: #fff;
+      border-top-right-radius: 4px;
+
+      .message-time {
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+  }
 }
 
 .message-bubble {
   max-width: 70%;
   padding: 12px 16px;
-  border-radius: 15px;
-  background: #fff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   position: relative;
-}
+  transition: all 0.3s ease;
 
-.user-message .message-bubble {
-  background: #409eff;
-  color: #000;
-}
-
-.message-content {
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.message-time {
-  font-size: 12px;
-  color: #999;
-  margin-top: 4px;
-  text-align: right;
-}
-
-.user-message .message-time {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.toolbar {
-  padding: 10px 20px;
-  background: white;
-  border-top: 1px solid #eee;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  gap: 10px;
-}
-
-.input-area {
-  position: relative;
-  width: 100%;
-  padding: 20px;
-  background: white;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.send-btn {
-  margin-top: 10px;
-  width: 100px;
-  position: absolute;
-  right: 24px;
-  bottom: 24px;
-}
-
-/* 美化滚动条 */
-.chat-messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.chat-messages::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-}
-
-.chat-header {
-  // background: linear-gradient(135deg, #434343 0%, #000000 100%);
-  color: white;
-  padding: 15px 25px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  position: relative;
-  z-index: 10;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 0 20px;
-  margin: 0 auto;
-}
-
-.back-btn {
-  margin-right: 20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 2;
-}
-
-.back-btn:hover {
-  transform: translateX(-3px);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.chat-info {
-  line-height: 1.4;
-}
-
-.chat-title {
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  color: #333;
-}
-
-.participants {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.participants .me {
-  color: #409eff;
-  font-weight: 500;
-}
-
-.participants .target {
-  color: #67c23a;
-  font-weight: 500;
-}
-
-.participants .el-icon {
-  margin: 0 8px;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 12px;
-  transition: transform 0.3s ease;
-}
-
-.participants:hover .el-icon {
-  transform: rotate(180deg) scale(1.2);
-}
-
-/* 微调消息区域高度 */
-.chat-messages {
-  height: calc(100vh - 240px); /* 根据实际高度调整 */
-}
-
-.chat-header {
-  position: relative;
-  overflow: hidden;
-}
-
-.chat-header::after {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    45deg,
-    transparent 25%,
-    rgba(255, 255, 255, 0.1) 50%,
-    transparent 75%
-  );
-  animation: shine 3s infinite linear;
-}
-
-@keyframes shine {
-  to {
-    transform: translate(50%, 50%);
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
-}
 
-// 添加消息加载动画：
-.loading-dots::after {
-  content: "";
-  animation: typing 1.5s infinite;
-}
-
-@keyframes typing {
-  0% {
-    content: "";
+  .message-content {
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
   }
-  33% {
-    content: ".";
-  }
-  66% {
-    content: "..";
-  }
-  100% {
-    content: "...";
-  }
-}
 
-// 添加发送中状态动画：
-.sending {
-  position: relative;
-  opacity: 0.7;
-}
-
-.sending::after {
-  content: "";
-  position: absolute;
-  right: -20px;
-  top: 50%;
-  width: 12px;
-  height: 12px;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  border-top-color: transparent;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-// 添加消息点击涟漪效果：
-.message-bubble {
-  position: relative;
-  overflow: hidden;
-}
-
-.message-bubble:active::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  border-radius: inherit;
-  animation: ripple 0.6s ease-out;
-}
-
-@keyframes ripple {
-  from {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(0);
-  }
-  to {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(2);
+  .message-time {
+    font-size: 12px;
+    margin-top: 4px;
+    text-align: right;
   }
 }
 
@@ -670,65 +427,110 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  perspective: 1000px; /* 3D 透视效果 */
+  perspective: 1000px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    position: relative;
+    z-index: 2;
+    transition: all 0.5s ease;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      transform: scale(1.1) rotateY(180deg);
+      box-shadow: 0 0 20px rgba(79, 172, 254, 0.8);
+    }
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: #4facfe;
+    border-bottom-color: #00f2fe;
+    z-index: 1;
+    animation: rotateBorder 3s linear infinite;
+  }
 }
 
-/* 头像图片样式 */
-.avatar-container img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
+// 工具栏样式
+.toolbar {
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  gap: 12px;
+  backdrop-filter: blur(10px);
+
+  .ant-btn {
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: scale(1.1);
+      background: rgba(79, 172, 254, 0.1);
+    }
+  }
+}
+
+// 输入区域样式
+.input-area {
   position: relative;
-  z-index: 2;
-  transition: transform 0.5s ease, box-shadow 0.5s ease;
-}
-
-/* 鼠标悬停时触发动画 */
-.avatar-container:hover img {
-  cursor: pointer;
-  transform: scale(1.1) rotateY(180deg); /* 3D 旋转 + 放大 */
-  box-shadow: 0 0 20px rgba(255, 105, 180, 0.8),
-    0 0 40px rgba(255, 105, 180, 0.6), 0 0 60px rgba(255, 105, 180, 0.4);
-}
-
-/* 边框动画 */
-.avatar-container::before {
-  content: "";
-  position: absolute;
-  width: 120%;
-  height: 120%;
-  border-radius: 50%;
-  border: 4px solid transparent;
-  border-top-color: #ff69b4;
-  border-bottom-color: #00ffff;
-  z-index: 1;
-  animation: rotateBorder 3s linear infinite;
-}
-
-/* 粒子特效 */
-.avatar-container::after {
-  content: "";
-  position: absolute;
   width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 105, 180, 0.4),
-    rgba(0, 255, 255, 0.4),
-    transparent 70%
-  );
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 0.5s ease;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(10px);
+
+  .ant-input {
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 12px;
+    transition: all 0.3s ease;
+
+    &:focus {
+      border-color: #4facfe;
+      box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.2);
+    }
+  }
 }
 
-.avatar-container:hover::after {
-  opacity: 1;
+.send-btn {
+  margin-top: 10px;
+  width: 100px;
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  border: none;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+  }
 }
 
-/* 边框旋转动画 */
+// 动画效果
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes rotateBorder {
   0% {
     transform: rotate(0deg);
@@ -736,5 +538,107 @@ onUnmounted(() => {
   100% {
     transform: rotate(360deg);
   }
+}
+
+// 滚动条样式
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(79, 172, 254, 0.5);
+  border-radius: 3px;
+
+  &:hover {
+    background: rgba(79, 172, 254, 0.8);
+  }
+}
+
+// 聊天头部样式
+.chat-header {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  padding: 16px 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0 20px;
+    margin: 0 auto;
+  }
+
+  .back-btn {
+    margin-right: 20px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+
+    &:hover {
+      transform: translateX(-3px);
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .chat-info {
+    line-height: 1.4;
+  }
+
+  .chat-title {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .participants {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+
+    .me {
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .target {
+      color: #fff;
+      font-weight: 500;
+    }
+  }
+}
+
+// 踢中动画
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px) rotate(-5deg);
+  }
+  50% {
+    transform: translateX(10px) rotate(5deg);
+  }
+  75% {
+    transform: translateX(-10px) rotate(-5deg);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 </style>

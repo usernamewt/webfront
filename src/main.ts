@@ -8,7 +8,7 @@ import app from "./store/piniastore.ts";
 import "virtual:svg-icons-register";
 import userPermession from "./directive/userPermession.ts";
 import copy from "./directive/copyText.ts";
-
+import "@wangeditor/editor/dist/css/style.css";
 app.use(Vant);
 app.use(i18n);
 import router, { dynamicRouter } from "./router/index.ts";

@@ -37,7 +37,7 @@
 </template>
 
 <script lang="ts" setup>
-import "@wangeditor/editor/dist/css/style.css";
+
 import { onBeforeUnmount, ref, shallowRef, onMounted, watch } from "vue";
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
 import { message } from "ant-design-vue";
